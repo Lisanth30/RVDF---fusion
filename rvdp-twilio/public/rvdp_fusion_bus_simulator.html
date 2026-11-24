@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RVDP-FUSION Bus Safety Simulator</title>
+<style>
+html,body{margin:0;height:100%;background:#0b1a24;color:#e6f1f5;font:12px/1.45 Verdana,Tahoma,sans-serif;overflow:hidden}
+canvas{display:block;touch-action:none}
+[hidden]{display:none!important}
+.pn{position:fixed;background:rgba(10,30,42,.95);border:1px solid #1f4a5c;border-radius:10px;padding:10px 12px;z-index:5;box-sizing:border-box}
+.mu{color:#8fb0bd;font-size:11px}
+#stage{left:10px;top:10px;width:325px;max-height:calc(100vh - 420px);overflow-y:auto;z-index:5}
+#stage h3{margin:2px 0 6px;font-size:17px}
+#stage p{margin:6px 0}
+.chip{display:inline-block;border:1px solid;border-radius:12px;padding:1px 9px;font-size:11px}
+.r{display:flex;justify-content:space-between;gap:8px;border-top:1px solid #1f4a5c;padding:3px 0}
+.r b{font-weight:600;text-align:right}
+.bar{position:relative;height:6px;background:#12313f;border-radius:3px;margin:6px 0 2px}
+.bar i{position:absolute;left:0;top:0;bottom:0;background:#3fd0e6;border-radius:3px}
+#sms{margin:4px 0 0;white-space:pre-wrap;font:12px Verdana,sans-serif;color:#7be0b5}
+#sensor b{color:#ffd166}
+#readings{left:10px;bottom:100px;width:325px;max-height:calc(100vh - 430px);overflow-y:auto;z-index:5}
+#readings h4{margin:0 0 4px}
+#ctrl{right:10px;top:10px;width:300px;max-height:calc(100vh - 100px);overflow:auto}
+.tabs{display:flex;gap:4px;margin-bottom:6px}.tabs button{flex:1}
+button{font:inherit;color:#e6f1f5;background:#10303c;border:1px solid #1f4a5c;border-radius:6px;padding:5px 9px;cursor:pointer}
+button:focus-visible{outline:2px solid #ffd166}
+button.on{background:#14808f;border-color:#3fd0e6}
+.seg{display:flex}.seg button{flex:1;border-radius:0;padding:5px 2px;font-size:11px}
+.seg button:first-child{border-radius:6px 0 0 6px}.seg button:last-child{border-radius:0 6px 6px 0}
+h4{margin:10px 0 3px;font-size:12px}
+input[type=range]{width:100%;accent-color:#3fd0e6;margin:0}
+select{width:100%;background:#10303c;color:#e6f1f5;border:1px solid #1f4a5c;border-radius:6px;padding:6px;font:inherit}
+.tag{border:1px solid #ffb347;color:#ffb347;border-radius:10px;padding:0 7px;font-size:10px;margin-left:6px;font-weight:normal}
+.v{float:right;color:#3fd0e6;font-weight:normal}
+#lblbar{left:50%;transform:translateX(-50%);bottom:116px;display:flex;gap:6px;padding:6px;white-space:nowrap}
+#bar{left:10px;right:10px;bottom:8px;display:flex;gap:12px;align-items:center;padding:8px 10px}
+#ctl{display:flex;gap:6px;flex:none}
+#tl{display:flex;flex:1;justify-content:space-between;overflow-x:auto;gap:6px}
+.tlc{display:flex;flex-direction:column;align-items:center;font-size:10px;color:#8fb0bd;min-width:44px}
+.tlc button{width:26px;height:26px;border-radius:50%;padding:0}
+.tlc.done button{border-color:#3fd0e6}.tlc.cur button{background:#14808f;border-color:#3fd0e6}.tlc.cur{color:#fff}
+.lb{position:fixed;transform:translate(-50%,-100%);font-size:10px;background:rgba(10,30,42,.92);border:1px solid #1f4a5c;border-radius:12px;padding:2px 8px 2px 18px;white-space:nowrap;cursor:pointer;z-index:2}
+.lb::before{content:'';position:absolute;left:6px;top:50%;width:7px;height:7px;margin-top:-3.5px;border-radius:50%;background:#8fb0bd}
+.lb.act{border-color:#3fd0e6;color:#fff}.lb.act::before{background:#3fd0e6}
+.lb.bad{border-color:#ff9800}.lb.bad::before{background:#ff9800}
+.lb.on{outline:2px solid #ffd166}
+.ok{color:#2fbf8f}.no{color:#ff4d4d}
+table{width:100%;border-collapse:collapse}td{border-top:1px solid #1f4a5c;padding:3px 2px;vertical-align:top}
+.nw{display:none}
+@media(max-width:900px){
+ .nw{display:inline-block}
+ #stage{width:calc(100vw - 44px);max-height:30vh}
+ #ctrl,#readings{display:none}
+ #ctrl.open,#readings.open{display:block;left:10px;right:10px;top:10px;bottom:195px;width:auto;max-height:none;z-index:8}
+ #lblbar{bottom:195px;max-width:96vw;overflow-x:auto}
+ #bar{flex-wrap:wrap;bottom:6px}
+ #tl{flex-basis:100%}
+}
+#rd{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}.rr{display:flex;justify-content:space-between;gap:6px;border-top:1px solid #1f4a5c;padding:2px 0;font-size:11px}
+#bar{flex-wrap:wrap}#sc{display:flex;gap:5px;flex-basis:100%;overflow-x:auto}#sc button{white-space:nowrap;font-size:11px;padding:4px 8px}
+#amb{left:345px;top:10px;width:350px;max-height:calc(100vh - 105px);overflow-y:auto;z-index:10;box-shadow:0 8px 30px rgba(0,0,0,.65)}#amb canvas{width:100%;max-height:135px;background:#071520;border-radius:6px;display:block}
+#rev{left:50%;top:50%;transform:translate(-50%,-50%);width:min(520px,94vw);max-height:80vh;overflow:auto;z-index:9}
+.blue{background:#1a5fd0;border-color:#4da3ff}.red{background:#a82020;border-color:#ff5252}
+textarea{width:100%;box-sizing:border-box;background:#10303c;color:#e6f1f5;border:1px solid #1f4a5c;border-radius:6px;font:inherit}
+.fr{display:flex;justify-content:space-between;gap:6px;border-top:1px solid #1f4a5c;padding:3px 0;font-size:11px;align-items:center}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}#fm{width:100%;border-radius:6px}
+@media(max-width:900px){#amb{left:10px;right:10px;top:auto;bottom:195px;width:auto;z-index:7}}
+</style></head><body>
+<div id="stage" class="pn"><div class="mu"><span id="st_n"></span> <span class="tag">Simulated sensor data</span></div><h3 id="st_t"></h3><span id="st_chip" class="chip"></span><p id="st_d"></p><div id="rows"></div><div id="prog"></div><p id="sensor" class="mu">Tap any label to see what that component does.</p><pre id="sms"></pre><div id="rule" class="mu"></div><div id="act" class="mu" style="margin-top:4px"></div><div id="score"></div></div><div id="amb" class="pn" hidden></div><div id="rev" class="pn" hidden></div>
+<div id="readings" class="pn"><h4 style="margin:0 0 6px"><span id="rd_toggle" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center"><span>Sensor readings <span class="tag">Simulated</span></span><span id="rd_arr" style="color:#3fd0e6;font-size:10px">▼ Hide</span></span></h4><div id="rd_wrap"><div id="rd"></div><h4>Event log</h4><div id="lg" style="font-size:11px"></div></div></div>
+<div id="ctrl" class="pn"><div class="tabs"><button data-p="pane_c" class="on">Controls</button><button data-p="pane_t">Tests</button><button data-p="pane_r">Rules</button><button data-p="pane_f">Fleet</button></div><div id="pane_c"></div><div id="pane_t" hidden></div><div id="pane_r" hidden></div><div id="pane_f" hidden></div></div>
+<div id="lblbar" class="pn"></div>
+<div id="bar" class="pn"><div id="sc"></div><div id="ctl"></div><div id="tl"></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+
+let okGL=typeof THREE!=='undefined';
+if(okGL){try{const c=document.createElement('canvas');okGL=!!(c.getContext('webgl')||c.getContext('experimental-webgl'))}catch(e){okGL=false}}
+if(!okGL){document.body.insertAdjacentHTML('afterbegin','<div class="pn" style="left:50%;top:40%;transform:translateX(-50%);max-width:90vw"><b>3D view unavailable</b><div class="mu">WebGL is not available or three.js could not load from cdnjs. Please use a browser with WebGL enabled.</div></div>');throw new Error('No WebGL')}
+//LOGIC-START
+const DEF={drv:'alert',road:'smooth',temp:90,batt:12.6,tyre:32,speed:50,spo2:98,hr:78,pax:'normal',crowd:46,panic:false,med:false,camFault:false,gpsFault:false,gsmFault:false,brake:false,door:false,phone:false,belt:true,hours:1,mirrorFreq:2,indicator:false};
+const TH0={persist:5,tempLim:105,tyreLow:26,spo2Lim:92,blink:.4,limit:80,hoursLim:4};
+const LVN=['SAFE','WARNING','HIGH RISK','CRITICAL'];
+const RULES={
+R1:'Overall state is the worst of the four module states.',
+R2:'Two or more modules abnormal at the same time: at least HIGH RISK.',
+R3:'Driver at HIGH RISK or worse together with any vehicle fault: CRITICAL.',
+R4:'A panic button (driver, conductor or passenger) overrides everything: CRITICAL at once.',
+R5:'A condition that lasts longer than the persistence threshold is escalated.',
+R6:'A failed camera, GPS or GSM is reported, never silently ignored.',
+R7:'CRITICAL turns on hazard lights and sends one emergency SMS with GPS to the depot control room and 112 / ERSS.',
+R8:'No GSM: log locally and show a failure. No GPS: send the SMS without location and say so.',
+R9:'Medical button: CRITICAL, one ambulance alert (type, bus ID, route, time, GPS) to 108/112 and the depot; driver told to stop safely or head to the nearest hospital.'};
+function paxCount(s,T){return (s.spo2<T.spo2Lim?1:0)+((s.hr<50||s.hr>130)?1:0)+(s.pax==='collapsed'?1:0)}
+function sendPlan(s){return s.gsmFault?'logged-local':(s.gpsFault?'sent-no-location':'sent')}
+function medPlan(s,c){
+ if(!s.med)return{plan:'none',sms:false,say:''};
+ if(c&&c.cancelled)return{plan:'cancelled',sms:false,say:'Cancelled by conductor within 10 s, logged'};
+ if(s.gsmFault)return{plan:'logged-local',sms:false,say:'GSM fault: logged locally. Call 108 manually.'};
+ return{plan:s.gpsFault?'sent-no-location':'sent',sms:true,say:'Ambulance alert sent to 108/112 and depot'+(s.gpsFault?' without location':'')}}
+function evaluate(s,c,T){
+ c=c||{};const R=new Set(),mod={},dd=c.dDur||0;
+ let l=0,t='Alert',g='';
+ if(s.camFault){l=1;t='Driver camera fault';g='DRIVER CAMERA FAULT';R.add('R6')}
+ else if(s.drv==='closed'){
+  if(dd<T.blink){t='Normal blink'}
+  else if(dd<T.persist/2){l=1;t='Eyes closing';g='DRIVER DROWSINESS'}
+  else if(dd<T.persist){l=2;t='Prolonged eye closure';g='DRIVER DROWSINESS'}
+  else{l=3;t='Drowsy, no response';g='DRIVER DROWSINESS';R.add('R5')}
+ }else if(s.drv==='yawn'||s.drv==='away'){
+  const y=s.drv==='yawn';l=dd>=T.persist?2:1;t=y?'Yawning':'Distracted, head turned away';g=y?'DRIVER DROWSINESS':'DRIVER DISTRACTED';if(l===2)R.add('R5')}
+ if(!s.camFault&&s.phone&&s.speed>5){const pl=s.speed>40?2:1;if(pl>l){l=pl;t='Phone use while moving';g='DRIVER PHONE USE'}}
+ if(s.hours>T.hoursLim){if(!l){t='Long continuous driving';g='DRIVER FATIGUE RISK'}l=Math.min(3,l+1)}
+ mod.driver={l,t,g};
+ let p=0;const vt=[];let vg='';
+ const vp=(n,m,k)=>{p+=n;vt.push(m);vg=vg||k};
+ if(s.temp>T.tempLim+15)vp(2,'Engine overheating','ENGINE TEMPERATURE HIGH');else if(s.temp>T.tempLim)vp(1,'Engine temperature high','ENGINE TEMPERATURE HIGH');
+ if(s.batt<10.5)vp(2,'Battery very low','BATTERY VOLTAGE LOW');else if(s.batt<11.8)vp(1,'Battery low','BATTERY VOLTAGE LOW');
+ if(s.tyre<T.tyreLow-8)vp(2,'Tyre pressure very low','TYRE PRESSURE WARNING');else if(s.tyre<T.tyreLow)vp(1,'Tyre pressure low','TYRE PRESSURE WARNING');
+ if(s.tyre<T.tyreLow&&s.speed>80)vp(1,'low tyre at high speed','TYRE PRESSURE WARNING');
+ if(s.brake)vp(2,'Brake air pressure low','BRAKE AIR PRESSURE LOW');
+ if(s.door&&s.speed>5)vp(2,'Door open while moving','DOOR OPEN WHILE MOVING');
+ mod.vehicle={l:Math.min(3,p),t:p?vt.join(', '):'Healthy',g:vg};
+ const rough=s.road==='rough';let rl=0,rt='Smooth',rg='';
+ if(rough||c.spike){rl=1;rt=rough?'Rough road vibration':'Pothole impact (above 2 g)';rg='ROUGH ROAD / POTHOLE';if(s.speed>80){rl=2;rt+=' at high speed'}}
+ if(!rl&&(c.harsh||s.speed>T.limit)){rl=1;rt=c.harsh?'Harsh braking':'Overspeed';rg=rt.toUpperCase()}
+ mod.road={l:rl,t:rt,g:rg};
+ let pl=0,pt='Normal',pg='';const medOn=s.med&&!c.cancelled;
+ if(s.panic){pl=3;pt='Panic button pressed';pg='PASSENGER SAFETY EMERGENCY';R.add('R4')}
+ if(medOn){pl=3;pt='Passenger medical emergency';pg='PASSENGER MEDICAL EMERGENCY';R.add('R9')}
+ if(!s.panic&&!medOn){
+  const n=paxCount(s,T);
+  if(n>0){pl=Math.min(3,n);if((c.pDur||0)>=T.persist&&pl<3){pl++;R.add('R5')}
+   if(pl>=2){pt='Possible Medical Emergency';pg='PASSENGER MEDICAL EMERGENCY'}else{pt='Vitals abnormal';pg='CHECK PASSENGER VITALS'}}}
+ mod.passenger={l:pl,t:pt,g:pg};
+ const ord=['driver','passenger','vehicle','road'],ls=ord.map(k=>mod[k].l);
+ let o=Math.max(...ls);
+ if(o>0)R.add('R1');
+ if(ls.filter(x=>x>=1).length>=2&&o<2){o=2;R.add('R2')}
+ if(mod.driver.l>=2&&mod.vehicle.l>=1&&o<3){o=3;R.add('R3')}
+ if(s.gpsFault||s.gsmFault)R.add('R6');
+ if(o===3)R.add('R7');
+ if(o===3&&(s.gpsFault||s.gsmFault))R.add('R8');
+ const w=(.35*mod.driver.l+.25*mod.vehicle.l+.15*mod.road.l+.25*mod.passenger.l)/3*100;
+ const score=Math.min(100,Math.max([5,35,65,90][o],Math.round(w)));
+ let top=null;for(const k of ord){if(mod[k].l>0&&(top===null||mod[k].l>mod[top].l))top=k}
+ const msg=top?(mod[top].g||mod[top].t).toUpperCase():'ALL SYSTEMS NORMAL';
+ const med=medPlan(s,c);
+ return{mod,o,score,msg,cls:LVN[o]+(top?': '+mod[top].t:''),top,rules:[...R],med,plan:s.med?med.plan:sendPlan(s)};
+}
+/* driving behaviour score: separate from the live safety level */
+const DED={lane_nomirror:['Lane change / turn without mirror check',5,'mirror'],nomirror30:['No mirror glance for 30 s while moving',2,'mirror'],harsh_brake:['Harsh braking',3,'brake'],harsh_acc:['Harsh acceleration',2,'acc'],corner:['Sharp cornering',3,'corner'],overspeed:['Overspeed for more than 10 s',4,'speed'],phone:['Phone use while moving',8,'phone'],belt:['Seatbelt not worn',3,'belt'],drowsy1:['Drowsiness WARNING',2,'drowsy'],drowsy2:['Drowsiness HIGH RISK',5,'drowsy'],drowsy3:['Drowsiness CRITICAL',10,'drowsy'],hours:['Hour beyond continuous driving limit',5,'hours'],lane_mirror:['Lane change with mirror check (good)',0,'good']};
+const CAP={mirror:15,brake:9,acc:6,corner:9,speed:12,phone:16,belt:9,drowsy:20,hours:15};
+const bandOf=x=>x>=85?'Good':x>=70?'Needs coaching':'Review required';
+function scoreTrip(ev){
+ const used={},ded=[];let pos=0;
+ for(const e of ev){const d=DED[e.type];if(!d)continue;
+  if(!d[1]){pos++;continue}
+  const u=used[d[2]]||0,p=Math.min(d[1],CAP[d[2]]-u);
+  if(p>0){used[d[2]]=u+p;ded.push(Object.assign({},e,{pts:p,label:d[0]}))}}
+ const score=Math.max(0,100-ded.reduce((a,e)=>a+e.pts,0));
+ return{score,ded,pos,band:bandOf(score)}}
+const laneType=gap=>gap<=5?'lane_mirror':'lane_nomirror';
+const mirrorGapType=(gap,speed)=>(gap>30&&speed>20)?'nomirror30':null;
+const reviewFlag=a=>a.length>0&&(a[a.length-1]<70||(a.length>=3&&a.slice(-3).every(x=>x<80)));
+const E=(p,c)=>evaluate(Object.assign({},DEF,p),Object.assign({dDur:0,pDur:0,spike:false,harsh:false},c),TH0);
+const T1=(n,p,c,f)=>[n,()=>{const r=E(p,c);return[f(r),LVN[r.o]+' | '+r.cls]}];
+const T2=(n,f)=>[n,()=>{const v=f();return[v[0],v[1]]}];
+const sc1=e=>scoreTrip(e).score;
+const TESTS=[
+T1('Normal driving stays SAFE',{},{},r=>r.o===0),
+T1('A 0.2 s blink gives no alarm',{drv:'closed'},{dDur:.2},r=>r.mod.driver.l===0),
+T1('Eyes closed 3 s gives HIGH RISK',{drv:'closed'},{dDur:3},r=>r.o===2),
+T1('Eyes closed 6 s gives CRITICAL',{drv:'closed'},{dDur:6},r=>r.o===3),
+T1('Yawn + hot engine gives HIGH RISK by R2',{drv:'yawn',temp:112},{dDur:1},r=>r.o===2&&r.rules.includes('R2')),
+T1('Drowsy (HIGH) + engine fault gives CRITICAL by R3',{drv:'closed',temp:112},{dDur:3},r=>r.o===3&&r.rules.includes('R3')),
+T1('Panic alone gives CRITICAL by R4',{panic:true},{},r=>r.o===3&&r.rules.includes('R4')),
+T1('SpO2 85 % alone gives WARNING',{spo2:85},{},r=>r.o===1&&r.mod.passenger.l===1),
+T1('SpO2 85 % + collapse gives Possible Medical Emergency',{spo2:85,pax:'collapsed'},{},r=>/Possible Medical/.test(r.mod.passenger.t)),
+T1('Camera fault is reported',{camFault:true},{},r=>r.mod.driver.t==='Driver camera fault'&&r.rules.includes('R6')),
+T1('CRITICAL + GSM fault: logged locally',{panic:true,gsmFault:true},{},r=>r.plan==='logged-local'),
+T1('CRITICAL + GPS fault: SMS sent without location',{panic:true,gpsFault:true},{},r=>r.plan==='sent-no-location'),
+T1('CRITICAL + working GPS and GSM: normal SMS',{panic:true},{},r=>r.plan==='sent'),
+T1('Medical button: CRITICAL + ambulance alert (R9)',{med:true},{},r=>r.o===3&&r.rules.includes('R9')&&r.med.plan==='sent'),
+T1('Medical button + GSM fault: logged locally, call 108',{med:true,gsmFault:true},{},r=>r.med.plan==='logged-local'&&/108/.test(r.med.say)),
+T1('Medical press cancelled within 10 s: nothing sent, logged',{med:true},{cancelled:true},r=>r.o===0&&!r.med.sms&&r.med.plan==='cancelled'),
+T2('Lane change with mirror check: no deduction',()=>{const s=sc1([{type:laneType(2)}]);return[s===100,'score '+s]}),
+T2('Lane change without mirror check deducts 5',()=>{const s=sc1([{type:laneType(9)}]);return[s===95,'score '+s]}),
+T2('30 s without mirror glance deducts 2',()=>{const s=sc1([{type:mirrorGapType(31,40)}]);return[s===98,'score '+s]}),
+T2('Phone use deducts 8',()=>{const s=sc1([{type:'phone'}]);return[s===92,'score '+s]}),
+T2('Category caps hold (10 phone events = -16)',()=>{const s=sc1(Array(10).fill({type:'phone'}));return[s===84,'score '+s]}),
+T2('Score never goes below 0',()=>{const s=sc1(Object.keys(DED).flatMap(k=>Array(6).fill({type:k})));return[s===0,'score '+s]}),
+T2('Bands: 84 Needs coaching, 69 Review required',()=>[bandOf(84)==='Needs coaching'&&bandOf(69)==='Review required'&&bandOf(85)==='Good',bandOf(84)+' / '+bandOf(69)]),
+T2('Three trips below 80 set Review required',()=>[reviewFlag([78,76,79])&&!reviewFlag([78,90,79])&&reviewFlag([90,66]),'flag logic']),
+T2('Driving score never changes the live safety level',()=>{const a=E({}).o;sc1(Array(20).fill({type:'phone'}));return[a===E({}).o&&a===0,'live level '+LVN[a]]})
+];
+function runTests(){return TESTS.map(([n,f])=>{let ok=false,got='';try{const v=f();ok=!!v[0];got=v[1]}catch(e){got=String(e)}return{n,ok,got}})}
+//LOGIC-END
+
+/* ================= SCENE ================= */
+const $=id=>document.getElementById(id),V3=THREE.Vector3,PI=Math.PI;
+const HX=['#2fbf8f','#ffd166','#ff9800','#ff3030'];
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x0b1a24);scene.fog=new THREE.Fog(0x0b1a24,70,190);
+const cam=new THREE.PerspectiveCamera(48,innerWidth/innerHeight,.1,400);
+const ren=new THREE.WebGLRenderer({antialias:true});ren.setSize(innerWidth,innerHeight);ren.setPixelRatio(Math.min(devicePixelRatio,2));
+document.body.appendChild(ren.domElement);
+scene.add(new THREE.HemisphereLight(0xcfeeff,0x0b1a24,1.15));
+const dlight=new THREE.DirectionalLight(0xffffff,.6);dlight.position.set(12,28,14);scene.add(dlight);
+scene.add(new THREE.GridHelper(300,100,0x1b6a7a,0x123747));
+
+const mc={};
+function M(c,o){const k=c+'|'+(o||1);return mc[k]||(mc[k]=new THREE.MeshStandardMaterial({color:c,roughness:.65,metalness:.15,transparent:(o||1)<1,opacity:o||1,side:THREE.DoubleSide,depthWrite:(o||1)>=1}))}
+function bx(p,w,h,d,m,x,y,z){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);p.add(o);return o}
+function cy(p,r,h,m,x,y,z,rz){const o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,18),m);o.position.set(x,y,z);if(rz)o.rotation.z=rz;p.add(o);return o}
+function sp(p,r,m,x,y,z){const o=new THREE.Mesh(new THREE.SphereGeometry(r,16,12),m);o.position.set(x,y,z);p.add(o);return o}
+function limb(p,a,b,r,m){const A=new V3(...a),B=new V3(...b),d=B.clone().sub(A),o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,1,10),m);o.scale.y=d.length();o.position.copy(A).add(B).multiplyScalar(.5);o.quaternion.setFromUnitVectors(new V3(0,1,0),d.normalize());p.add(o);return o}
+function edge(o){o.add(new THREE.LineSegments(new THREE.EdgesGeometry(o.geometry),new THREE.LineBasicMaterial({color:0x5fd8ee,transparent:true,opacity:.6})));return o}
+const cones=[];
+function cone(p,a,b,r,c){const A=new V3(...a),B=new V3(...b),len=A.distanceTo(B),g=new THREE.ConeGeometry(r,len,18,1,true);g.translate(0,-len/2,0);g.rotateX(-PI/2);
+ const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:.18,side:THREE.DoubleSide,depthWrite:false}));m.position.copy(A);p.add(m);m.lookAt(B);cones.push(m);return m}
+
+/* ---------- road and surroundings ---------- */
+const scr=[],L=140;
+bx(scene,9.4,.04,320,M(0x15262e),0,.03,-60);
+[-4.4,4.4].forEach(x=>bx(scene,.14,.05,320,M(0x7fd8e8),x,.06,-60));
+for(let i=0;i<28;i++)scr.push(bx(scene,.2,.05,2.6,M(0xcfeff7),0,.07,-100+i*5));
+for(let i=0;i<10;i++)[-9,9].forEach(x=>{const g=new THREE.Group();cy(g,.25,3,M(0x2b4a52),0,1.5,0);const c=new THREE.Mesh(new THREE.ConeGeometry(1.5,4.2,10),M(0x14505c));c.position.y=5;g.add(c);g.position.set(x,0,-100+i*14+(x>0?7:0));scene.add(g);scr.push(g)});
+const pots=[0,1,2].map(()=>{const m=new THREE.Mesh(new THREE.CylinderGeometry(.85,.85,.04,22),M(0x02080b));m.position.set(-1.7,.09,-50);m.visible=false;scene.add(m);return{m,on:false,f:false,r:false}});
+
+/* ---------- car body ---------- */
+const car=new THREE.Group();scene.add(car);
+const TEAL=0x1f7f92;
+/* BUS shell: z -2.5 (flat front) to +9.4 (rear), length 11.9 */
+const BZ0=-2.5,BZ1=9.4,BL=BZ1-BZ0,BC=(BZ0+BZ1)/2;
+bx(car,3.6,.22,BL,M(0x0f3a47),0,.55,BC);
+[-1,1].forEach(s=>{
+ edge(bx(car,.1,.85,BL,M(TEAL,.30),s*1.8,.98,BC));            /* lower side panel */
+ edge(bx(car,.1,1.45,BL,M(0x86e3f5,.10),s*1.8,2.58,BC));       /* window band */
+ for(let z=BZ0;z<=BZ1+.01;z+=1.19)bx(car,.1,1.45,.09,M(0x3ac6dd),s*1.8,2.58,z);   /* window pillars */
+ bx(car,.12,.07,BL,M(0x3ac6dd),s*1.8,1.86,BC);                 /* belt line */
+ bx(car,.12,.07,BL,M(0x3ac6dd),s*1.8,3.3,BC);                  /* cant rail */
+});
+/* front: grille / engine panel, flat windscreen, destination board */
+edge(bx(car,3.6,1.25,.4,M(TEAL,.28),0,1.2,-2.3));
+edge(bx(car,3.6,1.5,.06,M(0x86e3f5,.14),0,2.58,-2.1));      /* flat windscreen */
+bx(car,.07,1.45,.07,M(0x3ac6dd),0,2.58,-2.1);
+[-1.8,1.8].forEach(x=>bx(car,.1,1.45,.1,M(0x3ac6dd),x,2.58,-2.1));
+const brd=document.createElement('canvas');brd.width=256;brd.height=64;
+{const g=brd.getContext('2d');g.fillStyle='#1a1200';g.fillRect(0,0,256,64);g.fillStyle='#ffb300';g.font='bold 40px Verdana';g.textAlign='center';g.fillText('23C  CHENNAI',128,45)}
+const brdM=new THREE.Mesh(new THREE.PlaneGeometry(1.9,.48),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(brd)}));brdM.position.set(0,3.22,-2.12);brdM.rotation.y=PI;car.add(brdM);
+/* dash cowl (right and centre; left side is the door well) */
+bx(car,2.9,.95,1.2,M(0x0e3441),.25,1.4,-1.5);
+/* door well + door on the left, near the conductor */
+bx(car,.9,.12,1.0,M(0x1a5560),-1.3,.7,-1.0);bx(car,.9,.12,1.0,M(0x1a5560),-1.3,1.0,-1.0);
+edge(bx(car,.14,2.3,1.0,M(0x2fa8bf,.35),-1.8,1.9,-1.0));
+/* roof (cutaway: translucent) + rim + AC hump */
+edge(bx(car,3.5,.06,BL,M(TEAL,.06),0,3.45,BC));
+bx(car,3.6,.08,.12,M(0x3ac6dd),0,3.45,BZ0);bx(car,3.6,.08,.12,M(0x3ac6dd),0,3.45,BZ1);
+edge(bx(car,1.6,.25,2.4,M(TEAL,.25),0,3.62,5.4));
+/* grab rail + poles */
+bx(car,.06,.06,8.0,M(0x9ad8ff),-.35,3.1,5.4);bx(car,.06,.06,8.0,M(0x9ad8ff),.35,3.1,5.4);
+[2.0,3.8,5.6,7.4].forEach(z=>[-.3,.3].forEach(x=>bx(car,.05,2.1,.05,M(0x9ad8ff),x,2.05,z)));
+/* rear: engine hump + emergency exit */
+edge(bx(car,3.5,1.2,.3,M(TEAL,.25),0,1.2,BZ1+.1));
+edge(bx(car,1.0,.9,.05,M(0xff6b6b,.35),0,2.4,BZ1));
+/* wheels */
+const wheels=[];
+[[-1.7,.6],[1.7,.6],[-1.7,7.2],[1.7,7.2]].forEach(([x,z])=>{const w=new THREE.Group();w.position.set(x,.6,z);cy(w,.6,.5,M(0x0a1217),0,0,0,PI/2);cy(w,.36,.52,M(0x7fa3ae),0,0,0,PI/2);bx(w,.56,.9,.1,M(0x244650),0,0,0);bx(w,.56,.1,.9,M(0x244650),0,0,0);car.add(w);wheels.push(w)});
+/* lights */
+const hazM=new THREE.MeshStandardMaterial({color:0xffa000,emissive:0xffa000,emissiveIntensity:0});
+const hazL=[];
+[-1,1].forEach(s=>{bx(car,.5,.22,.05,new THREE.MeshStandardMaterial({color:0xffffee,emissive:0xffffee,emissiveIntensity:.7}),s*1.2,1.1,-2.52);bx(car,.5,.22,.05,new THREE.MeshStandardMaterial({color:0xff2020,emissive:0xff2020,emissiveIntensity:.7}),s*1.2,1.1,BZ1+.27);
+ hazL.push(bx(car,.35,.22,.06,hazM,s*1.55,1.1,-2.52),bx(car,.35,.22,.06,hazM,s*1.55,1.1,BZ1+.27))});
+/* engine bay */
+const engMat=new THREE.MeshStandardMaterial({color:0x4a6770,roughness:.6,emissive:0xff2000,emissiveIntensity:0});
+bx(car,1.6,.6,.3,engMat,0,1.15,-2.3);
+bx(car,.5,.35,.2,M(0x1a4fb0),-1,1.15,-2.4);
+/* steering wheel + column */
+const swh=new THREE.Mesh(new THREE.TorusGeometry(.33,.05,8,22),M(0x0b2530));swh.position.set(.8,2.05,-.45);swh.rotation.x=-.9;car.add(swh);
+limb(car,[.8,1.9,-.5],[.8,1.5,-1.0],.07,M(0x0b2530));
+/* seats */
+const SEAT=M(0x2b5666);
+const seatD=new THREE.Group();car.add(seatD);
+bx(seatD,1,.3,1.1,SEAT,.8,1.0,.3);bx(seatD,1,1.2,.25,SEAT,.8,1.7,.85);
+bx(car,1,.3,1.1,SEAT,-.8,1.0,.3);bx(car,1,1.2,.25,SEAT,-.8,1.7,.85);
+[2.55,4.4,5.6,6.8,8.0].forEach(z=>[-1,1].forEach(sd=>{bx(car,1.4,.3,1.1,SEAT,sd*1.0,1.0,z);bx(car,1.4,1.2,.25,SEAT,sd*1.0,1.7,z+.6)}));
+bx(car,3.4,.3,.9,SEAT,0,1.0,8.9);
+bx(car,.5,.5,1.6,M(0x123c49),0,.95,.6);
+
+/* ---------- driver (right-hand seat) ---------- */
+const SKIN=M(0xd9a77e),SHIRT=M(0x2e6f95),PANTS=M(0x1b2a38);
+bx(car,.7,1,.4,SHIRT,.8,1.85,.5);
+const neck=new THREE.Group();neck.position.set(.8,2.4,.5);car.add(neck);
+sp(neck,.27,SKIN,0,.3,0);
+const hairD=new THREE.Mesh(new THREE.SphereGeometry(.29,16,10,0,PI*2,0,PI*.55),M(0x111111));hairD.position.set(0,.33,.03);neck.add(hairD);
+const eyeL=sp(neck,.05,M(0x111111),-.1,.36,-.25),eyeR=sp(neck,.05,M(0x111111),.1,.36,-.25);
+const mouth=bx(neck,.12,.03,.03,M(0x7a1f1f),0,.17,-.26);
+[-1,1].forEach(s=>{
+ limb(car,[.8+s*.4,2.25,.5],[.8+s*.3,2.0,-.45],.08,SHIRT);sp(car,.09,SKIN,.8+s*.3,2.0,-.45);
+ limb(car,[.8+s*.2,1.2,.45],[.8+s*.2,1.3,-.35],.11,PANTS);limb(car,[.8+s*.2,1.3,-.35],[.8+s*.2,.75,-.7],.09,PANTS)});
+
+/* ---------- rear passenger ---------- */
+const pass=new THREE.Group();pass.position.set(-.8,1.2,2.8);car.add(pass);
+const PSH=M(0xc2587a);
+bx(pass,.7,1,.4,PSH,0,.65,0);
+const headP=new THREE.Group();headP.position.set(0,1.2,0);pass.add(headP);
+sp(headP,.27,SKIN,0,.3,0);
+const hairP=bx(headP,.52,.62,.16,M(0x111111),0,.15,.2);
+sp(headP,.045,M(0x111111),-.1,.36,-.25);sp(headP,.045,M(0x111111),.1,.36,-.25);
+limb(pass,[.35,.95,0],[.55,.6,-.35],.07,PSH);sp(pass,.08,SKIN,.55,.6,-.35);
+limb(pass,[-.35,.95,0],[-.45,.5,-.35],.07,PSH);sp(pass,.08,SKIN,-.45,.5,-.35);
+[-1,1].forEach(s=>{limb(pass,[s*.2,.1,0],[s*.2,.2,-.9],.11,M(0x33405a));limb(pass,[s*.2,.2,-.9],[s*.2,-.45,-1.0],.09,M(0x33405a))});
+
+/* ---------- components (labels) ---------- */
+const C={},compMeshes=[];
+const DESC={
+ driver:'Driver, right-hand seat. The driver camera watches his eyes, mouth and head all the time.',
+ passenger:'Rear-left passenger. The cabin camera, the wearable sensor and the panic button protect this seat.',
+ camD:'Driver camera (Pi Camera / USB). Films the face. A MobileNet / EfficientNet TFLite model reads eye closure, yawning and head pose over many frames, so a normal blink does not cause a false alarm.',
+ camR:'Forward road camera (optional). A vision model can find potholes and rough road ahead. The prototype can start with IMU events only.',
+ camC:'Cabin camera. Checks passenger presence and abnormal events such as a collapse or long inactivity.',
+ pi:'Safety Fusion Engine on Raspberry Pi 5/4 or Jetson Nano. All sensor and AI outputs arrive here. It calculates the Safety Risk Score and the Green / Yellow / Orange / Red state locally, with no cloud needed.',
+ imu:'IMU + vibration sensor (for example MPU6050). Measures acceleration and vibration. A spike above about 2 g is a pothole or harsh impact event.',
+ temp:'Engine temperature sensor. Compared with the safe limit. Above the limit the Vehicle risk goes up.',
+ batt:'Battery voltage sensing circuit (voltage divider). Real vehicle power must never go straight to the Pi: use a regulator, fuse and isolation.',
+ tp0:'TPMS tyre pressure / temperature input (front-left shown, all four tyres are monitored). Low pressure together with high speed gives a combined vehicle risk.',
+ obd:'OBD-II / CAN interface. Safe way to read speed, brake and engine data from the real vehicle.',
+ buzzer:'Buzzer. Audible warning from HIGH RISK upward. It beeps faster at CRITICAL.',
+ vib:'Vibration motor in the driver seat. Tactile alert so the driver feels the warning even in a noisy cabin.',
+ lamp:'Status LED lamp. Green SAFE, Yellow WARNING, Orange HIGH RISK, Red CRITICAL.',
+ disp:'Dashboard display. Shows the exact problem such as Driver Drowsiness, Tyre Pressure Warning or Passenger Medical Emergency.',
+ gps:'GPS module (NEO-6M or GNSS). Gives latitude and longitude for the emergency message. In this demo you can switch on the laptop location (browser geolocation) so the SMS carries your real position and a Google Maps link. If it fails, the SMS goes without location and says so.',
+ gsm:'GSM module (SIM800L). Sends the emergency SMS: type, vehicle ID, time and location. If it fails, the event is saved in the local log and the dashboard shows a failure.',
+ panic:'Panic / emergency button for the passenger. A reliable manual trigger when AI detection may not be enough. Pressing it overrides the normal score and goes straight to CRITICAL.',
+ spo2:'Wearable heart-rate and SpO2 sensor (optional). Abnormal values give Possible Medical Emergency. The system does not claim a medical diagnosis.',
+ tower:'Cellular network tower. Carries the SMS to the emergency contact. For Tamil Nadu the idea is to escalate confirmed emergencies to the official emergency services, not replace them.',
+ phone:'Emergency contact phone. Receives the SMS with the emergency type, vehicle ID, time and GPS position.'};
+function comp(id,label,parent,pos,size,color,opt){
+ opt=opt||{};
+ const mat=new THREE.MeshStandardMaterial({color,emissive:color,emissiveIntensity:.7});
+ const o=new THREE.Mesh(new THREE.BoxGeometry(size[0],size[1],size[2]),mat);o.position.set(pos[0],pos[1],pos[2]);parent.add(o);o.userData.id=id;
+ if(opt.hidden)o.visible=false;
+ const c={id,label,o,mat,color,nolabel:opt.nolabel,l:null};
+ if(!opt.nolabel){const l=document.createElement('div');l.className='lb';l.textContent=label;l.onclick=()=>pickComp(id);document.body.appendChild(l);c.l=l}
+ C[id]=c;compMeshes.push(o);return c}
+comp('driver','Driver',neck,[0,.3,0],[.6,.6,.6],0x2e6f95,{hidden:true});
+comp('passenger','Passenger',headP,[0,.3,0],[.6,.6,.6],0xc2587a,{hidden:true});
+comp('camD','Driver camera',car,[.8,2.0,-1.3],[.3,.2,.25],0x4da3ff);
+comp('camR','Road camera',car,[0,3.2,-1.95],[.3,.2,.25],0xc792ea);
+comp('camC','Cabin camera',car,[0,3.3,1.6],[.3,.15,.3],0xff6b81);
+comp('pi','Fusion Engine (Pi / Jetson)',car,[0,1.3,.6],[.45,.12,.6],0x2fbf8f);
+comp('imu','IMU + vibration',car,[0,.72,1.5],[.35,.1,.35],0xc792ea);
+comp('temp','Engine temp sensor',car,[.3,1.5,-2.45],[.2,.2,.2],0xffa94d);
+comp('batt','Battery voltage',car,[-1,1.45,-2.6],[.3,.1,.3],0xffa94d);
+comp('tp0','TPMS',car,[-2.03,.6,.6],[.2,.2,.2],0xffa94d);
+[['tp1',2.03,.6],['tp2',-2.03,7.2],['tp3',2.03,7.2]].forEach(([id,x,z])=>comp(id,'TPMS',car,[x,.6,z],[.2,.2,.2],0xffa94d,{nolabel:true}));
+comp('obd','OBD-II / CAN',car,[.2,1.05,-1.3],[.3,.15,.3],0x7be0b5);
+comp('buzzer','Buzzer',car,[-.9,1.9,-1.3],[.25,.15,.25],0xffd166);
+comp('vib','Vibration motor',seatD,[.8,1.2,.4],[.3,.1,.3],0xffd166);
+const lamp=comp('lamp','Status lamp',car,[.4,1.55,-.87],[.55,.14,.05],0x1b3b46);
+const ledM=[0x2fbf8f,0xffd166,0xff9800,0xff3030].map((c,i)=>{const m=new THREE.MeshStandardMaterial({color:c,emissive:c,emissiveIntensity:.1});sp(lamp.o,.045,m,-.2+i*.13,0,.04);return m});
+const disp=comp('disp','Dashboard display',car,[-.6,1.55,-.87],[1,.42,.03],0x0a2a36);
+const dc=document.createElement('canvas');dc.width=320;dc.height=130;const dctx=dc.getContext('2d');const dtex=new THREE.CanvasTexture(dc);
+const dplane=new THREE.Mesh(new THREE.PlaneGeometry(.96,.39),new THREE.MeshBasicMaterial({map:dtex}));dplane.position.z=.02;disp.o.add(dplane);
+comp('gps','GPS module',car,[.5,3.3,.3],[.4,.1,.25],0xdddddd);
+comp('gsm','GSM module',car,[-.5,3.3,.3],[.4,.1,.25],0xdddddd);
+const panicC=comp('panic','Panic button',car,[-1.65,1.75,2.3],[.15,.25,.25],0xe02020);
+const spo2C=comp('spo2','SpO2 / HR wearable',pass,[.55,.6,-.35],[.16,.1,.16],0x66ccff);
+/* tower and phone */
+const tw=new THREE.Group();tw.position.set(15,0,-8);scene.add(tw);
+cy(tw,.3,14,M(0x2b6a78),0,7,0);[3,6,9,12].forEach(y=>bx(tw,2.4-y*.12,.12,.12,M(0x2b6a78),0,y,0));
+comp('tower','Cellular network',tw,[0,14.3,0],[.7,.7,.7],0xff5252);
+const phoneG=new THREE.Group();phoneG.position.set(15,0,9);scene.add(phoneG);
+cy(phoneG,.6,.8,M(0x123c49),0,.4,0);
+comp('phone','Emergency contact',phoneG,[0,1.1,0],[.9,.12,1.5],0x4da3ff);
+/* view cones */
+const coneD=cone(car,[.8,2.0,-1.3],[.8,2.7,.5],.5,0x4dff9a);
+cone(car,[0,3.2,-1.95],[0,.2,-17],3,0xc792ea);
+cone(car,[0,3.3,1.6],[-.4,2.3,2.9],1,0xff6b81);
+
+/* ---------- data wires ---------- */
+const wires=[];
+function wire(a,b,col){
+ const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(6),3));
+ const ln=new THREE.Line(g,new THREE.LineBasicMaterial({color:col,transparent:true,opacity:.25}));ln.frustumCulled=false;scene.add(ln);
+ const p=new THREE.Mesh(new THREE.SphereGeometry(.09,8,8),new THREE.MeshBasicMaterial({color:col}));scene.add(p);
+ wires.push({a:C[a],b:C[b],ln,p,t:Math.random()})}
+['camD','camR','camC','imu','temp','batt','tp0','tp1','tp2','tp3','obd','spo2','panic','gps','gsm'].forEach(id=>wire(id,'pi',0x3fd0e6));
+['buzzer','vib','lamp','disp'].forEach(id=>wire('pi',id,0xffb347));
+
+
+/* ---------- bus additions ---------- */
+const mq=matchMedia('(prefers-color-scheme: dark)');
+function theme(){const d=mq.matches,c=d?0x0b1a24:0xcfe6ee;scene.background.set(c);scene.fog.color.set(c);document.body.style.background=document.documentElement.style.background=d?'#0b1a24':'#cfe6ee'}
+theme();if(mq.addEventListener)mq.addEventListener('change',theme);
+[['mirL','Left mirror',-1.95,2.1,-1.6],['mirR','Right mirror',1.95,2.1,-1.6],['mirC','Rear-view mirror',.3,2.9,-1.5]].forEach(([id,l,x,y,z])=>comp(id,l,car,[x,y,z],[.12,.3,.22],0x9ad8ff));
+const cond=new THREE.Group();cond.position.set(-1.45,1.9,-.55);car.add(cond);bx(cond,.55,1,.35,M(0xc8a02a),0,0,0);sp(cond,.24,SKIN,0,.75,0);
+comp('cond','Conductor',cond,[0,.75,0],[.5,.5,.5],0xc8a02a,{hidden:true});
+[[-.8,.5,0xd0a040],[-1.2,4.4,0x6a8f3a],[.8,2.8,0x8a5ac8],[1.2,5.6,0xb07a3a],[-.8,6.8,0x4a8a9a]].forEach(([x,z,c])=>{const g=new THREE.Group();g.position.set(x,1.2,z);car.add(g);bx(g,.7,1,.4,M(c),0,.65,0);sp(g,.27,SKIN,0,1.5,0)});
+const medC=comp('med','Medical button (blue)',car,[-1.65,1.75,1.6],[.15,.25,.25],0x1a6fe0);
+const medC2=comp('medC','Medical button (conductor)',car,[-1.65,1.75,-.1],[.15,.25,.25],0x1a6fe0);
+[medC,medC2].forEach(m=>{bx(m.o,.02,.16,.05,M(0xffffff),.09,0,0);bx(m.o,.02,.05,.16,M(0xffffff),.09,0,0)});
+comp('door','Door sensor',car,[-1.78,1.6,-1.0],[.1,.9,.6],0x9aff9a);
+Object.assign(DESC,{
+mirL:'Left mirror. The driver camera reads head pose to see if the driver glances here before a lane change or turn.',
+mirR:'Right mirror. Same mirror-check detection. Head pose can miss eye-only glances, so it needs per-driver calibration and human review.',
+mirC:'Rear-view mirror. A glance here counts as a mirror check for the driving behaviour score.',
+cond:'Conductor, near the door. Gets the medical emergency display, the first-aid checklist and the Confirm ambulance reached button.',
+med:'Blue Medical emergency button in the passenger area. Separate from the red panic button so medical alerts go to ambulances (108) and security alerts go to police (112). One press = CRITICAL + one ambulance alert.',
+medC:'Second blue medical button near the conductor. The conductor can cancel a false press within 10 seconds; the cancellation is logged.',
+door:'Door sensor. Door open while the bus moves faster than 5 km/h adds a Vehicle fault.'});
+DESC.panic='Red panic buttons (driver, conductor, passenger). A manual trigger when AI detection may not be enough: overrides everything and goes straight to CRITICAL (rule R4).';
+['mirL','mirR','mirC','med','medC','door'].forEach(id=>wire(id,'pi',0x3fd0e6));
+/* ================= STATE ================= */
+const S=Object.assign({},DEF),T=Object.assign({},TH0),ctx={dDur:0,pDur:0,spike:false,harsh:false};
+let res=evaluate(S,ctx,T),lastO=0,smsSent=false,clock=0,mult=1,playing=false,follow=true,lblMode='all',sound=true;
+let logArr=[],spkVal=0,spkT=0,potTimer=0,bump=0,pk=null,phoneT=0,pendingText='',dispKey='';
+let curScn='normal',mode='stage',stageI=0,RN={script:[],t:0,i:0,dur:10,auto:true};
+const NM={driver:'Driver',vehicle:'Vehicle',road:'Road',passenger:'Passenger'};
+let trip=[],lastMirror=0,mirrorNow=false,mirYaw=0,mirKick=0,indT=0,hbT=0,ovT=0,lastDL=0,fl={},medStart=-99,medDone=false,busIdx=0,auto=false,touched=false,lastX=0,fh='';
+const AVG=Math.round(Array.from({length:30},(_,i)=>82+(i*7)%15).reduce((a,b)=>a+b)/30);
+
+const clockStr=()=>{const s=Math.floor(clock);return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
+
+/* ---------- guided demo and scenarios ---------- */
+const STG=[
+{k:'Cabin',t:'Cabin and occupants',view:'full',dur:8,set:{},script:[],act:['driver','cond','passenger','pi'],d:'A cutaway government bus: driver on the right-hand seat, conductor near the door, passengers on seats. Four modules watch it: Road, Vehicle, Driver, Passenger. The Safety Fusion Engine runs on the bus, no cloud needed. All sensor values are simulated.'},
+{k:'Camera',t:'Driver camera',view:'driver',dur:9,set:{},script:[[2,{drv:'away'}],[6,{drv:'alert'}]],act:['camD','driver'],d:'The driver camera (cone) watches face and head. At 2 s the driver looks away from the road and the AI reads this as Distracted. Video stays on the bus; only event data leaves it.'},
+{k:'AI',t:'Drowsiness AI and persistence',view:'driver',dur:13,set:{},script:[[1,{drv:'yawn'}],[4,{drv:'closed'}],[8.6,{drv:'alert'}]],act:['camD','pi','buzzer','vib'],d:'A blink under 0.4 s is ignored. A yawn is a WARNING. Eyes that stay closed escalate to HIGH RISK, then CRITICAL once the persistence threshold is passed. Buzzer and seat vibration start at HIGH RISK.'},
+{k:'Mirrors',t:'Mirror checks and driving score',view:'driver',dur:12,set:{speed:60},script:[[2,{ev:'lane'}],[6,{mirrorFreq:0}],[8,{ev:'lane'}]],act:['mirL','mirR','mirC','camD'],d:'Lane change 1: the driver glances at a mirror first, no deduction. Then the driver stops checking mirrors; lane change 2 without a glance deducts 5. This score is a coaching aid, not a live alarm.'},
+{k:'Road',t:'Road: IMU and vibration',view:'road',dur:12,set:{speed:60},script:[[1.5,{road:'pothole'}],[9,{road:'smooth'}]],act:['imu','camR'],d:'The IMU sits near the floor. A wheel dropping into a pothole gives a spike above 2 g, logged as a road event. Above 80 km/h the Road module goes to HIGH RISK.'},
+{k:'Vehicle',t:'Vehicle health',view:'engine',dur:13,set:{},script:[[1,{temp:112}],[4.5,{tyre:22}]],act:['temp','batt','tp0','obd','door'],d:'Engine temperature, battery, tyre pressure, brake air pressure and the door sensor are read through OBD-II / CAN. Two faults together add up to HIGH RISK.'},
+{k:'Passenger',t:'Passenger safety and medical button',view:'passenger',dur:12,set:{},script:[[1,{spo2:88}],[3,{pax:'collapsed'}],[5.4,{spo2:98,pax:'normal'}]],act:['spo2','camC','panic','med','passenger'],d:'Low SpO2 gives a warning; low SpO2 plus a collapse gives Possible Medical Emergency (never a diagnosis). The blue Medical button is separate from the red panic button so it can call an ambulance.'},
+{k:'Data',t:'Data acquisition',view:'full',dur:10,set:{},script:[[1,{speed:75}],[4,{road:'rough'}],[8,{road:'smooth'}]],act:['camD','camR','camC','imu','temp','batt','tp0','obd','spo2','pi'],d:'Every sensor streams to the Raspberry Pi 5 / Jetson Nano (cyan pulses), time-stamped and read together.'},
+{k:'Fusion',t:'Safety Fusion Engine',view:'dash',dur:14,set:{},script:[[1,{drv:'yawn'}],[3.5,{temp:112}],[5.5,{drv:'alert'}],[7,{drv:'closed'}]],act:['pi','disp','lamp'],d:'Yawn plus hot engine = HIGH RISK (R2). Later eyes close while the engine fault remains: drowsy plus vehicle fault = CRITICAL (R3). The active rule is shown in the top-left card.'},
+{k:'Alert',t:'Alert and actuation',view:'dash',dur:9,set:{},script:[[1.5,{panic:true}]],act:['panic','buzzer','vib','lamp','disp'],d:'A panic press overrides everything (R4). Buzzer, seat vibration, hazard lights, red lamp and the exact problem on the dashboard.'},
+{k:'Ambulance',t:'Ambulance alert',view:'passenger',dur:24,set:{},script:[[1,{med:true}]],act:['med','medC','cond','buzzer'],d:'The blue button gives CRITICAL. The driver is told to stop safely or head to the nearest hospital. After the 10 s false-press guard one ambulance alert is sent; the map shows the nearest free ambulance moving in. Simulated: real dispatch needs integration with the state 108 service.'},
+{k:'GPS/GSM',t:'GPS and GSM message',view:'tower',dur:16,set:{panic:true},script:[[.5,{ev:'resend'}],[6,{gpsFault:true,resend:1}],[11,{gpsFault:false,gsmFault:true,resend:1}]],act:['gps','gsm','tower','phone'],d:'The SMS carries type, bus ID, route, time and GPS. At 6 s GPS fails: it is sent without location and says so. At 11 s GSM fails: the event is logged locally and the dashboard shows a failure.'},
+{k:'Fleet',t:'Fleet control room and review queue',view:'full',tab:'pane_f',dur:12,set:{},script:[],act:['pi'],d:'The depot sees every bus as Green / Yellow / Orange / Red with driver score band. Red buses jump to the top. Drivers flagged Review required wait in the review queue for a human decision.'},
+{k:'Report',t:'Event log and report',view:'full',tab:'pane_t',dur:10,set:{},script:[],act:['pi'],d:'Every event is stored with time, values, level and GPS. Open the Tests tab: the checks call the same evaluate() and scoreTrip() code the simulator uses.'}
+];
+const SCN={
+normal:{n:'Normal driving',dur:12,set:{},script:[],d:'Everything normal, with regular mirror checks. Change any input on the right.'},
+drowsy:{n:'Drowsy driver',dur:14,set:{speed:70},script:[[1,{drv:'yawn'}],[4,{drv:'closed'}]],d:'Yawn, then eyes stay closed: WARNING, HIGH RISK, CRITICAL as the timer passes the persistence threshold.'},
+pothole:{n:'Pothole at high speed',dur:12,set:{speed:90},script:[[1,{road:'pothole'}]],d:'At 90 km/h every pothole spike is HIGH RISK for the Road module.'},
+vehicle:{n:'Engine overheat + low tyre',dur:12,set:{speed:85},script:[[1,{temp:112}],[4,{tyre:20}],[7,{temp:128}]],d:'Engine over limit, a very low tyre at high speed, then overheating: Vehicle reaches CRITICAL.'},
+r3:{n:'Drowsy + engine fault (R3)',dur:12,set:{speed:60},script:[[1,{temp:112}],[2,{drv:'closed'}]],d:'Driver at HIGH RISK plus any vehicle fault = CRITICAL by rule R3.'},
+medical:{n:'Medical button (heart attack case)',dur:28,set:{},script:[[1,{spo2:86,hr:135}],[3,{pax:'collapsed'}],[5,{med:true}]],d:'Low SpO2, fast heart rate and a collapse, then the blue button is pressed. The system shows Possible Medical Emergency and never claims a diagnosis.'},
+panic:{n:'Passenger panic button',dur:10,set:{},script:[[2,{panic:true}]],d:'Panic overrides every other score: CRITICAL at once.'},
+careless:{n:'Careless driving',dur:26,set:{mirrorFreq:0,speed:95},script:[[2,{ev:'lane'}],[4,{ev:'harsh_brake'}],[6,{phone:true}],[8,{belt:false}],[12,{ev:'lane'}],[15,{ev:'harsh_acc'}]],d:'No mirror checks, lane changes without looking, harsh braking, phone use, no seatbelt, overspeed. Watch the driver score card; the live safety level reacts only to real hazards.'},
+faults:{n:'GPS + GSM failure',dur:20,set:{},script:[[1,{gpsFault:true}],[2,{panic:true}],[8,{panic:false,gpsFault:false,gsmFault:true}],[10,{panic:true}]],d:'Panic with GPS fault: SMS without location. Then panic with GSM fault: event logged locally.'},
+camera:{n:'Camera fault',dur:10,set:{},script:[[1,{camFault:true}]],d:'A failed driver camera is reported, never silently ignored (R6).'}
+};
+
+/* ---------- logging, SMS, sound ---------- */
+function log(txt){logArr.push({c:clockStr(),o:res.o,sc:res.score,txt});if(logArr.length>60)logArr.shift()}
+let ac;
+function beep(f){if(!sound)return;try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume();const o=ac.createOscillator(),g=ac.createGain();o.type='square';o.frequency.value=f||880;g.gain.value=.035;o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+.16)}catch(e){}}
+/* ---------- live laptop location + Twilio SMS ---------- */
+const LOC={lat:null,lng:null,acc:null,id:null,err:''};
+const TW={enabled:true,callOnConfirm:true,lang:'en-IN',msgTanglish:'🚨 EMERGENCY ALERT – TAMIL NADU GOVERNMENT BUS 🚨\n\nAvasaram! Avasaram! ⚠️\n\nBus Number: TN 47 N 0001\n\nIndha bus-la oru passenger-ku medical emergency yerpattulladhu.\n\nUdanadiyaaga ambulance thevai! 🚑\n\nDayavu seidhu udanadiyaaga ambulance-ai anuppi vaikkavum.\n\nPassenger-in uyirukku aabathu irukkalaam. Adhanaal medical team viraivaaga sambava idathukku vandhu sera vendum.\n\nArugil irukkum hospital matrum emergency response team-ku indha thagavalai udanadiyaaga therivikkavum.\n\nIdhu oru avasara nilai. Thayavu seidhu thaamadhikkaamal nadavadikkai edukkavum!\n\n— RVDP-FUSION Bus Safety Alert System',url:location.protocol.startsWith('http')?location.origin:'http://localhost:3000',to:'+917603854975',status:'Twilio Voice & SMS ready'};
+try{
+  const q=JSON.parse(localStorage.getItem('rvdpTw')||'{}');
+  if(q.url&&!location.protocol.startsWith('http'))TW.url=q.url;
+  if(q.to)TW.to=q.to;
+  if(q.enabled!==undefined)TW.enabled=q.enabled;
+  if(q.callOnConfirm!==undefined)TW.callOnConfirm=q.callOnConfirm;
+  if(q.lang&&q.lang!=='ta-IN')TW.lang=q.lang;else TW.lang='en-IN';
+  if(q.msgTanglish)TW.msgTanglish=q.msgTanglish;
+  else if(q.msgTamil && !/[\u0B80-\u0BFF]/.test(q.msgTamil))TW.msgTanglish=q.msgTamil;
+}catch(e){}
+function saveTw(){try{localStorage.setItem('rvdpTw',JSON.stringify({url:TW.url,to:TW.to,enabled:TW.enabled,callOnConfirm:TW.callOnConfirm,lang:TW.lang,msgTanglish:TW.msgTanglish}))}catch(e){}}
+let locUI=null,twUI=null;
+function updLoc(){if(!locUI)return;
+ locUI.btn.textContent=LOC.id!==null?'Stop using laptop location':'Use my laptop location';locUI.btn.classList.toggle('on',LOC.id!==null);
+ locUI.info.textContent=LOC.lat!=null?'Live fix: '+LOC.lat.toFixed(5)+', '+LOC.lng.toFixed(5)+' (accuracy about '+Math.round(LOC.acc)+' m)'+(LOC.acc>500?'. Low accuracy: laptop is probably using Wi-Fi/IP location.':''):(LOC.err||'Off: the SMS uses the demo GPS position.')}
+function locStart(){
+ if(!navigator.geolocation){LOC.err='This browser has no geolocation.';return updLoc()}
+ LOC.err='Waiting for permission...';
+ LOC.id=navigator.geolocation.watchPosition(p=>{LOC.lat=p.coords.latitude;LOC.lng=p.coords.longitude;LOC.acc=p.coords.accuracy;LOC.err='';updLoc();if(!LOC.logged){LOC.logged=1;log('Live location locked from laptop (+/-'+Math.round(LOC.acc)+' m)')}},
+  e=>{LOC.err=e.code===1?'Permission denied. Click the lock icon in the address bar and allow Location.':e.code===2?'Position unavailable. Turn on Windows/macOS Location Services.':'Location timed out, retrying...';if(e.code===1){locStop(true)}updLoc()},
+  {enableHighAccuracy:true,maximumAge:5000,timeout:20000});updLoc()}
+function locStop(keepErr){if(LOC.id!==null&&navigator.geolocation)navigator.geolocation.clearWatch(LOC.id);LOC.id=null;LOC.lat=null;LOC.logged=0;if(!keepErr)LOC.err='';updLoc()}
+const hemi=(v,a,b)=>Math.abs(v).toFixed(5)+' '+(v>=0?a:b);
+function gpsText(){
+ if(S.gpsFault)return 'UNAVAILABLE (sent without location)';
+ if(LOC.lat!=null)return hemi(LOC.lat,'N','S')+', '+hemi(LOC.lng,'E','W')+' (live, +/-'+Math.round(LOC.acc)+' m)\nhttps://maps.google.com/?q='+LOC.lat.toFixed(6)+','+LOC.lng.toFixed(6);
+ return '10.9601 N, 78.0766 E (demo)'}
+function setTw(t){TW.status=t;if(twUI)twUI.st.textContent=t}
+async function twSend(body,force){
+ if(!TW.enabled&&!force)return;
+ if(!/^\+[1-9]\d{7,14}$/.test(TW.to)){setTw('Enter the phone number with country code, e.g. +919876543210');return}
+ setTw('Sending through Twilio...');
+ try{
+  const r=await fetch(TW.url.replace(/\/$/,'')+'/api/send-alert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to:TW.to,body,lat:LOC.lat,lng:LOC.lng,acc:LOC.acc})});
+  const j=await r.json().catch(()=>({}));
+  if(r.ok&&j.ok){setTw('Twilio: SMS '+j.status+' (SID '+j.sid+')');log('Twilio SMS sent to ...'+TW.to.slice(-4))}
+  else{setTw('Twilio error: '+(j.error||('HTTP '+r.status)));log('Twilio SMS FAILED: '+(j.error||r.status))}
+ }catch(e){setTw('Cannot reach the backend at '+TW.url+'. Is "node server.js" running?');log('Twilio backend not reachable')}}
+let callPoller=null;
+function startCallStatusPolling(){
+ if(callPoller)return;
+ callPoller=setInterval(async()=>{
+  try{
+   const r=await fetch(TW.url.replace(/\/$/,'')+'/api/call-status');
+   const j=await r.json().catch(()=>({}));
+   if(!j.ok)return;
+   const stEl=document.getElementById('am_call_st');
+   if(j.attended){
+    if(stEl)stEl.textContent='✅ CALL ATTENDED! Receiver answered the phone. Calling stopped.';
+    setTw('Call ATTENDED by receiver! Calling stopped.');
+    clearInterval(callPoller);callPoller=null;
+    return;
+   }
+   if(!j.active){
+    if(stEl&&stEl.textContent.includes('Calling'))stEl.textContent='Call alerts inactive';
+    clearInterval(callPoller);callPoller=null;
+    return;
+   }
+   if(j.status==='calling'){
+    const txt='📞 Calling '+TW.to+' (Attempt #'+(j.retryCount+1)+')... Answer to attend';
+    if(stEl)stEl.textContent=txt;setTw(txt);
+   }else if(j.status==='waiting-retry'){
+    const txt='⚠️ Call not attended. Next retry in '+j.nextRetryInSec+' s (1 call/min)...';
+    if(stEl)stEl.textContent=txt;setTw(txt);
+   }
+  }catch(e){}
+ },2000);
+}
+async function twStopCall(){
+ try{
+  await fetch(TW.url.replace(/\/$/,'')+'/api/stop-call',{method:'POST'});
+  log('Twilio calling stopped');
+  if(callPoller){clearInterval(callPoller);callPoller=null;}
+  const stEl=document.getElementById('am_call_st');if(stEl)stEl.textContent='⏹️ Call alerts stopped';
+  setTw('Twilio calling stopped');
+ }catch(e){}
+}
+async function twCall(message,reason){
+ if(!TW.enabled&&!reason)return;
+ if(!/^\+[1-9]\d{7,14}$/.test(TW.to)){setTw('Enter the phone number with country code, e.g. +919876543210');return}
+ const sayMessage = (reason==='test' && message) ? message : (TW.msgTanglish || message);
+ const voiceLabel = TW.lang==='en-US' ? 'US English' : 'Indian Voice (Tanglish/English)';
+ setTw('Initiating Twilio call ('+voiceLabel+') to '+TW.to+'...');
+ log('Initiating Twilio call ('+voiceLabel+') to '+TW.to.slice(0,4)+'****'+TW.to.slice(-3)+'...');
+ const stEl=document.getElementById('am_call_st');if(stEl)stEl.textContent='📞 Calling '+TW.to+'... Answer to attend';
+ try{
+  const r=await fetch(TW.url.replace(/\/$/,'')+'/api/make-call',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to:TW.to,message:sayMessage,language:TW.lang,reason,bus:busId(),route:FL[busIdx][1]})});
+  const j=await r.json().catch(()=>({}));
+  if(r.ok&&j.ok){
+   log('Twilio call active in '+TW.lang+' (status: '+j.status+')');
+   startCallStatusPolling();
+  }else{
+   setTw('Twilio Call: '+(j.error||('HTTP '+r.status)));
+   log('Twilio Call: '+(j.error||r.status));
+   if(stEl)stEl.textContent=(j.attended?'✅ Call already attended.':('⚠️ '+(j.error||r.status)));
+  }
+ }catch(e){setTw('Cannot reach backend for Call at '+TW.url);log('Twilio Call backend unreachable');if(stEl)stEl.textContent='⚠️ Backend not reachable'}}
+function doSms(why){
+ const med=S.med,plan=med?res.med.plan:sendPlan(S);
+ const gps=gpsText();
+ const body=med ? (TW.msgTanglish+'\n\n📍 Bus Location:\n'+gps) : ('Type: '+why+'\nBus: '+busId()+'\nRoute: '+FL[busIdx][1]+'\nTime: '+clockStr()+'\nGPS: '+gps);
+ const to=med?'ambulance service 108/112 + depot control room':'depot control room + 112 / ERSS';
+ if(plan==='logged-local'){if(pk&&pk.m)scene.remove(pk.m);pk=null;$('sms').textContent='GSM FAULT: message NOT sent. Saved in local log. Dashboard: COMMUNICATION FAILURE'+(med?'\nDRIVER: call 108 manually.':'')+'\n'+body;log('Communication failure, event logged locally: '+why);return}
+ twSend(body);
+ pendingText='SMS delivered to '+to+(plan==='sent-no-location'?' (no location)':'')+'\n'+body;
+ $('sms').textContent='GSM: sending emergency SMS...';
+ pk={t:0,m:pk&&pk.m?pk.m:sp(scene,.28,new THREE.MeshBasicMaterial({color:0x7be0b5}),0,0,0)};
+ log((med?'Ambulance alert ':'Emergency SMS ')+(plan==='sent'?'sent':'sent without location')+': '+why);
+}
+const busId=()=>FL[busIdx][0];
+/* driving behaviour events */
+const VAL={lane_nomirror:()=>'indicator on, no glance in 5 s',lane_mirror:()=>'mirror glance before manoeuvre',nomirror30:()=>'30 s without glance',harsh_brake:()=>'-0.5 g',harsh_acc:()=>'+0.4 g',corner:()=>'0.45 g lateral',overspeed:()=>S.speed+' km/h, limit '+T.limit,phone:()=>'phone-use classifier',belt:()=>'seatbelt classifier',hours:()=>S.hours+' h'};
+VAL.drowsy1=VAL.drowsy2=VAL.drowsy3=()=>'abnormal '+ctx.dDur.toFixed(1)+' s';
+function addEv(type){trip.push({type,t:clockStr(),speed:S.speed,val:(VAL[type]||(()=>''))()});const d=DED[type];if(d&&d[1])log('Score -'+d[1]+': '+d[0])}
+function laneChange(){indT=3;if(S.mirrorFreq===2&&S.drv==='alert'&&!S.camFault){lastMirror=clock-1;mirKick=1.2}
+ addEv(laneType(S.mirrorFreq===0?99:clock-lastMirror))}
+function evNow(k){if(k==='lane')laneChange();else{addEv(k);if(k==='harsh_brake')hbT=3}}
+function tripStep(dt){
+ indT=Math.max(0,indT-dt);S.indicator=indT>0;hbT=Math.max(0,hbT-dt);mirKick=Math.max(0,mirKick-dt);
+ const per=S.mirrorFreq===2?7:22,mv=S.speed>20&&S.drv==='alert'&&!S.camFault&&S.mirrorFreq>0;
+ mirrorNow=(mv&&(clock%per)<1.2)||mirKick>0;
+ mirYaw=mirKick>0?.9:(mirrorNow?[.9,-.7,.35][Math.floor(clock/per)%3]:0);
+ if(mirrorNow)lastMirror=clock;
+ const m30=mirrorGapType(clock-lastMirror,S.speed);if(m30){addEv(m30);lastMirror=clock}
+ if(S.speed>T.limit){ovT+=dt;if(ovT>10&&!fl.ov){fl.ov=1;addEv('overspeed')}}else{ovT=0;fl.ov=0}
+ if(S.phone&&S.speed>5){if(!fl.ph){fl.ph=1;addEv('phone')}}else fl.ph=0;
+ if(!S.belt&&S.speed>5){if(!fl.bt){fl.bt=1;addEv('belt')}}else fl.bt=0;
+ const ex=Math.floor(S.hours-T.hoursLim);while((fl.hrs||0)<ex){fl.hrs=(fl.hrs||0)+1;addEv('hours')}
+}
+function tripAfter(){const dl=res.mod.driver.l;if(dl>lastDL&&/DROWS/.test(res.mod.driver.g))addEv('drowsy'+dl);lastDL=dl}
+
+/* ---------- inputs ---------- */
+function setIn(k,v){
+ if(k==='resend'){doSms(res.msg==='ALL SYSTEMS NORMAL'?'Test message':res.msg);return}
+ if(k==='ev'){evNow(v);return}if(S[k]===v)return;if(k==='med'){if(v){medStart=clock;medDone=false;smsSent=false;callTriggered=false}else{callTriggered=false;twStopCall()}}
+ S[k]=v;
+ if(k==='drv')ctx.dDur=0;
+ if(k==='road'&&v==='pothole')potTimer=0;
+}
+function resetRun(){
+ callTriggered=false;twStopCall();
+ ctx.dDur=0;ctx.pDur=0;trip=[];fl={};ovT=0;hbT=0;lastDL=0;medStart=-99;lastMirror=clock-(S.mirrorFreq===0?25:0);spkT=0;spkVal=0;bump=0;potTimer=0;
+ pots.forEach(p=>{p.on=false;p.m.visible=false});
+ if(pk&&pk.m)scene.remove(pk.m);pk=null;$('sms').textContent='';
+}
+function applyDue(){
+ let n=0;
+ while(RN.i<RN.script.length&&RN.script[RN.i][0]<=RN.t){const set=RN.script[RN.i++][1];for(const k in set)setIn(k,set[k]);n++}
+ if(n)syncUI();
+}
+function stepRunner(dt){
+ RN.t+=dt;applyDue();
+ if(RN.t>=RN.dur){
+  if(RN.auto&&stageI<STG.length-1)goStage(stageI+1);
+  else{RN.t=RN.dur;playing=false;updPlay()}
+ }
+}
+function goStage(i){
+ stageI=i;mode='stage';const g=STG[i];
+ if(!g.keep){Object.assign(S,DEF,g.set);resetRun()}else Object.assign(S,g.set);
+ RN={script:g.script,t:0,i:0,dur:g.dur,auto:true};
+ $('st_n').textContent='Stage '+(i+1)+' of '+STG.length;$('st_t').textContent=g.t;$('st_d').textContent=g.d;
+ $('sensor').innerHTML='Tap any label to see what that component does.';
+ document.querySelectorAll('.lb').forEach(l=>l.classList.remove('on'));
+ scenSel.value='tour';
+ if(follow)goView(g.view);if(g.tab)showTab(g.tab);
+ applyDue();syncUI();updTL();
+}
+function loadScenario(k){
+ if(k==='tour'){goStage(stageI);return}
+ if(k==='custom')return;
+ const sc=SCN[k];mode='scn';curScn=k;scenSel.value=k;
+ Object.assign(S,DEF,sc.set);Object.assign(T,TH0);resetRun();
+ RN={script:sc.script,t:0,i:0,dur:sc.dur,auto:false};
+ $('st_n').textContent='Scenario';$('st_t').textContent=sc.n;$('st_d').textContent=sc.d;
+ $('sensor').innerHTML='Tap any label to see what that component does.';
+ playing=true;updPlay();applyDue();syncUI();updTL();
+}
+function userSet(k,v){setIn(k,v);playing=false;updPlay();if(scenSel.value!=='custom')scenSel.value='custom';syncUI()}
+function resetAll(){Object.assign(S,DEF);Object.assign(T,TH0);logArr=[];clock=0;playing=false;lastO=0;smsSent=false;resetRun();goStage(0);updPlay()}
+
+/* ---------- controls UI ---------- */
+const reg=[];
+const pc=$('pane_c');
+function head(parent,txt){const h=document.createElement('h4');h.textContent=txt;parent.appendChild(h);return h}
+function seg(parent,title,key,opts){
+ head(parent,title);const d=document.createElement('div');d.className='seg';
+ opts.forEach(([v,l])=>{const b=document.createElement('button');b.textContent=l;b.onclick=()=>userSet(key,v);b._v=v;d.appendChild(b)});
+ parent.appendChild(d);reg.push(()=>[...d.children].forEach(b=>b.classList.toggle('on',S[key]===b._v)))}
+function slider(parent,title,obj,key,min,max,step,unit,isInput){
+ const h=head(parent,title+' ');const v=document.createElement('span');v.className='v';h.appendChild(v);
+ const r=document.createElement('input');r.type='range';r.min=min;r.max=max;r.step=step;r.value=obj[key];
+ r.oninput=()=>{obj[key]=+r.value;if(isInput){playing=false;updPlay();scenSel.value='custom'}syncUI()};
+ parent.appendChild(r);reg.push(()=>{r.value=obj[key];v.textContent=(+obj[key]).toFixed(step<1?1:0)+unit})}
+function syncUI(){reg.forEach(f=>f())}
+
+head(pc,'Scenario');
+const scenSel={value:''};
+const nt=document.createElement('div');nt.className='mu';nt.textContent='Use the scenario buttons in the bottom bar, or change any input below (this pauses playback).';pc.appendChild(nt);
+head(pc,'SENSOR INPUTS (all simulated)').style.color='#3fd0e6';
+seg(pc,'Driver state (camera AI)','drv',[['alert','Alert'],['yawn','Yawning'],['closed','Eyes closed'],['away','Head away']]);
+seg(pc,'Mirror-check frequency','mirrorFreq',[[0,'None'],[1,'Rare'],[2,'Regular']]);
+seg(pc,'Phone use','phone',[[false,'No'],[true,'Using phone']]);
+seg(pc,'Seatbelt','belt',[[true,'Worn'],[false,'Not worn']]);
+seg(pc,'Road','road',[['smooth','Smooth'],['rough','Rough'],['pothole','Potholes']]);
+slider(pc,'Speed',S,'speed',0,140,1,' km/h',true);
+slider(pc,'Continuous driving',S,'hours',0,10,.5,' h',true);
+slider(pc,'Engine temperature',S,'temp',60,140,1,' C',true);
+slider(pc,'Battery voltage',S,'batt',9,14.5,.1,' V',true);
+slider(pc,'Tyre pressure (front-left)',S,'tyre',10,40,1,' psi',true);
+seg(pc,'Brake / air pressure','brake',[[false,'OK'],[true,'Low']]);
+seg(pc,'Door','door',[[false,'Closed'],[true,'Open']]);
+slider(pc,'Passengers on board',S,'crowd',40,50,1,'',true);
+slider(pc,'Passenger SpO2',S,'spo2',70,100,1,' %',true);
+slider(pc,'Passenger heart rate',S,'hr',30,180,1,' bpm',true);
+seg(pc,'Passenger motion','pax',[['normal','Normal'],['collapsed','Collapsed']]);
+seg(pc,'Panic button (driver / conductor / passenger)','panic',[[false,'Released'],[true,'Pressed']]);
+seg(pc,'Medical emergency button (blue)','med',[[false,'Released'],[true,'Pressed']]);
+seg(pc,'Driver camera','camFault',[[false,'Working'],[true,'Fault']]);
+seg(pc,'GPS module','gpsFault',[[false,'Working'],[true,'Fault']]);
+seg(pc,'GSM module','gsmFault',[[false,'Working'],[true,'Fault']]);
+head(pc,'LIVE LOCATION + TWILIO SMS').style.color='#3fd0e6';
+{const mk=(t,st)=>{const e=document.createElement(t);if(st)e.style.cssText=st;return e};
+ const IS='width:100%;box-sizing:border-box;background:#0b1a24;color:#e6f1f5;border:1px solid #1f4a5c;border-radius:6px;padding:5px 7px;font:inherit;margin:2px 0';
+ const btn=mk('button','width:100%');btn.onclick=()=>{LOC.id!==null?locStop():locStart()};pc.appendChild(btn);
+ const info=mk('div');info.className='mu';info.style.margin='3px 0 6px';pc.appendChild(info);
+ locUI={btn,info};updLoc();
+ const lt=mk('div');lt.className='mu';lt.textContent='Ambulance / test phone number (with country code)';pc.appendChild(lt);
+ const to=mk('input',IS);to.type='tel';to.placeholder='+919876543210';to.value=TW.to;to.oninput=()=>{TW.to=to.value.trim();saveTw()};pc.appendChild(to);
+ const ut=mk('div');ut.className='mu';ut.textContent='Backend URL (server.js)';pc.appendChild(ut);
+ const url=mk('input',IS);url.type='url';url.value=TW.url;url.oninput=()=>{TW.url=url.value.trim();saveTw()};pc.appendChild(url);
+ const lab=mk('label','display:flex;gap:6px;align-items:center;margin:6px 0');const cb=mk('input');cb.type='checkbox';cb.checked=TW.enabled;cb.onchange=()=>{TW.enabled=cb.checked;saveTw();setTw(cb.checked?'Twilio Voice & SMS ON':'Twilio OFF (simulation only)')};lab.appendChild(cb);lab.appendChild(document.createTextNode('Send real SMS through Twilio on CRITICAL / ambulance alert'));pc.appendChild(lab);
+ const labCall=mk('label','display:flex;gap:6px;align-items:center;margin:6px 0');const cbCall=mk('input');cbCall.type='checkbox';cbCall.checked=TW.callOnConfirm;cbCall.onchange=()=>{TW.callOnConfirm=cbCall.checked;saveTw();log('Twilio voice call on confirmation: '+(cbCall.checked?'ON':'OFF'))};labCall.appendChild(cbCall);labCall.appendChild(document.createTextNode('Make automated Voice Call from Twilio on emergency confirmation'));pc.appendChild(labCall);
+ const ltLang=mk('div');ltLang.className='mu';ltLang.textContent='Voice Call Accent / குரல் வடிவம்:';pc.appendChild(ltLang);
+  const selLang=mk('select',IS);
+  [['en-IN','Indian Voice (Polly.Aditi - for Tanglish & English)'],['en-US','US Voice (Alice - English)']].forEach(([code,label])=>{
+   const opt=document.createElement('option');opt.value=code;opt.textContent=label;if(code===TW.lang)opt.selected=true;selLang.appendChild(opt);
+  });
+  selLang.onchange=()=>{TW.lang=selLang.value;saveTw();log('Voice call accent set to '+TW.lang);setTw('Call voice: '+selLang.options[selLang.selectedIndex].text)};
+  pc.appendChild(selLang);
+  const ltSpeech=mk('div');ltSpeech.className='mu';ltSpeech.style.marginTop='4px';ltSpeech.textContent='Voice Message to Speak / போனில் பேச வேண்டிய செய்தி (Type what to talk):';pc.appendChild(ltSpeech);
+  const taSpeech=document.createElement('textarea');
+  taSpeech.id='tw_speech';
+  taSpeech.style.cssText='width:100%;box-sizing:border-box;background:#0b1a24;color:#ffd166;border:1px solid #1f4a5c;border-radius:6px;padding:6px;font:inherit;font-size:11px;margin:2px 0';
+  taSpeech.rows=6;
+  taSpeech.value=TW.msgTanglish;
+  taSpeech.oninput=()=>{TW.msgTanglish=taSpeech.value;saveTw();if($('am_speech'))$('am_speech').value=taSpeech.value};
+  pc.appendChild(taSpeech);
+  const preBox=mk('div','display:flex;gap:4px;margin-bottom:6px;flex-wrap:wrap');
+  const p1=mk('button','flex:1;font-size:10px;padding:3px');p1.textContent='Avasaram (Tanglish)';
+  p1.onclick=()=>{taSpeech.value=TW.msgTanglish='🚨 EMERGENCY ALERT – TAMIL NADU GOVERNMENT BUS 🚨\n\nAvasaram! Avasaram! ⚠️\n\nBus Number: TN 47 N 0001\n\nIndha bus-la oru passenger-ku medical emergency yerpattulladhu.\n\nUdanadiyaaga ambulance thevai! 🚑\n\nDayavu seidhu udanadiyaaga ambulance-ai anuppi vaikkavum.\n\nPassenger-in uyirukku aabathu irukkalaam. Adhanaal medical team viraivaaga sambava idathukku vandhu sera vendum.\n\nArugil irukkum hospital matrum emergency response team-ku indha thagavalai udanadiyaaga therivikkavum.\n\nIdhu oru avasara nilai. Thayavu seidhu thaamadhikkaamal nadavadikkai edukkavum!\n\n— RVDP-FUSION Bus Safety Alert System';TW.lang='en-IN';selLang.value='en-IN';saveTw();if($('am_speech'))$('am_speech').value=TW.msgTanglish};
+  const p2=mk('button','flex:1;font-size:10px;padding:3px');p2.textContent='Ambulance Confirm';
+  p2.onclick=()=>{taSpeech.value=TW.msgTanglish='RVDP bus thagaval: Ambulance vandhuvittadhu endru conductor urudhi seithullaar.';TW.lang='en-IN';selLang.value='en-IN';saveTw();if($('am_speech'))$('am_speech').value=TW.msgTanglish};
+  const p3=mk('button','flex:1;font-size:10px;padding:3px');p3.textContent='English Alert';
+  p3.onclick=()=>{taSpeech.value=TW.msgTanglish='Emergency alert from RVDP Bus Safety System on bus TN 47 N 0001. Passenger medical emergency confirmed. Immediate ambulance required.';TW.lang='en-IN';selLang.value='en-IN';saveTw();if($('am_speech'))$('am_speech').value=TW.msgTanglish};
+  const p4=mk('button','flex:1;font-size:10px;padding:3px');p4.textContent='Test Message';
+  p4.onclick=()=>{taSpeech.value=TW.msgTanglish='Vanakkam! Idhu RVDP bus safety test call. Voice call integration seriyaaga velai seigiradhu.';TW.lang='en-IN';selLang.value='en-IN';saveTw();if($('am_speech'))$('am_speech').value=TW.msgTanglish};
+  preBox.appendChild(p1);preBox.appendChild(p2);preBox.appendChild(p3);preBox.appendChild(p4);
+  pc.appendChild(preBox);
+  const btns=mk('div','display:flex;gap:6px;margin:4px 0');
+  const tb=mk('button','flex:1');tb.textContent='Send test SMS';tb.onclick=()=>twSend('RVDP-FUSION TEST\nBus: '+busId()+'\nTime: '+clockStr()+'\nGPS: '+gpsText(),true);btns.appendChild(tb);
+  const cbBtn=mk('button','flex:1;background:#14808f;border-color:#3fd0e6');cbBtn.textContent='📞 Test Call (Speak message)';cbBtn.onclick=()=>twCall(TW.msgTanglish,'test');btns.appendChild(cbBtn);
+  pc.appendChild(btns);
+  const st=mk('div');st.className='mu';st.style.margin='4px 0';st.textContent=TW.status;pc.appendChild(st);twUI={st};
+  const nt=mk('div');nt.className='mu';nt.textContent='Twilio calls & texts '+TW.to+'. Voice speaks the exact message typed above using clear Indian accent.';pc.appendChild(nt)}
+head(pc,'DRIVING EVENTS (score only)').style.color='#3fd0e6';
+const evb=document.createElement('div');evb.className='seg';
+[['Lane change','lane'],['Harsh brake','harsh_brake'],['Harsh accel','harsh_acc'],['Sharp corner','corner']].forEach(([l,k])=>{const b=document.createElement('button');b.textContent=l;b.onclick=()=>userSet('ev',k);evb.appendChild(b)});pc.appendChild(evb);
+head(pc,'THRESHOLDS').style.color='#3fd0e6';
+slider(pc,'Persistence threshold',T,'persist',2,12,.5,' s',false);
+slider(pc,'Engine temperature limit',T,'tempLim',90,130,1,' C',false);
+slider(pc,'Tyre low-pressure limit',T,'tyreLow',20,34,1,' psi',false);
+slider(pc,'Passenger SpO2 limit',T,'spo2Lim',85,96,1,' %',false);
+slider(pc,'Speed limit',T,'limit',40,100,1,' km/h',false);
+slider(pc,'Continuous driving limit',T,'hoursLim',1,8,.5,' h',false);
+head(pc,'Current classification');const clsEl=document.createElement('div');clsEl.style.fontWeight='bold';pc.appendChild(clsEl);
+const ft=document.createElement('div');ft.className='mu';ft.style.marginTop='8px';
+ft.innerHTML='<b>Simulated sensor data.</b> Real-world validation (FPS, latency, false alarm rate, night-time camera accuracy, mirror-check accuracy, real ambulance dispatch integration) is the next step, through a pilot on 10 to 20 buses at one depot.<br><br><b>Privacy:</b> driver video is processed on the bus; only event data (and a short snapshot for flagged events) leaves the bus.<br><br><b>Driver trust:</b> a safety and coaching aid. The score flags cases for human review and never applies an automatic penalty. Mirror-check detection from head pose can miss eye-only glances, so it needs per-driver calibration and human review.<br><br><b>Future extension:</b> trains (Kavach and vigilance devices already exist).';
+pc.appendChild(ft);
+
+/* rules + tests panes */
+const pr=$('pane_r'),pt=$('pane_t');
+pr.innerHTML='<div class="mu" style="margin-bottom:4px">Active rules light up while they decide the state.</div>'+Object.keys(RULES).map(k=>'<div id="rl_'+k+'" style="border-top:1px solid #1f4a5c;padding:5px 0;color:#8fb0bd"><b>'+k+'</b> '+RULES[k]+'</div>').join('')+'<h4>Driver score deductions</h4><div class="mu">Each trip starts at 100. Per-category caps, never below 0. Bands: 85-100 Good, 70-84 Needs coaching, below 70 Review required. Coaching tool, no automatic penalty.</div>'+Object.keys(DED).filter(k=>DED[k][1]).map(k=>'<div class="fr"><span>'+DED[k][0]+'</span><b>-'+DED[k][1]+' (cap '+CAP[DED[k][2]]+')</b></div>').join('');
+function renderTests(){
+ const r=runTests(),n=r.filter(x=>x.ok).length;
+ pt.innerHTML='<div class="mu" style="margin-bottom:4px">These checks call the same evaluate() and scoreTrip() code the simulator uses.</div><button id="rt">Run all tests</button><p><b style="color:'+(n===r.length?'#2fbf8f':'#ff4d4d')+'">'+n+' / '+r.length+' passed</b></p><table>'+r.map(x=>'<tr><td class="'+(x.ok?'ok':'no')+'">'+(x.ok?'PASS':'FAIL')+'</td><td>'+x.n+'<div class="mu">'+x.got+'</div></td></tr>').join('')+'</table>';
+ $('rt').onclick=renderTests}
+renderTests();
+function showTab(id){document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x.dataset.p===id));['pane_c','pane_t','pane_r','pane_f'].forEach(i=>$(i).hidden=i!==id)}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>showTab(b.dataset.p));
+
+/* ---------- transport, labels, timeline ---------- */
+const ctl=$('ctl');
+function mk(txt,fn,cls){const b=document.createElement('button');b.textContent=txt;b.onclick=fn;if(cls)b.className=cls;return b}
+const bPrev=mk('Previous',()=>goStage(Math.max(0,stageI-1)));
+const bPlay=mk('Play',()=>{
+ if(!playing&&RN.t>=RN.dur){if(mode==='stage'){goStage(stageI);playing=true}else loadScenario(curScn);updPlay();return}
+ playing=!playing;updPlay()});
+const bNext=mk('Next',()=>goStage(Math.min(STG.length-1,stageI+1)));
+const bSkip=mk('Skip stage',()=>{while(RN.i<RN.script.length){const set=RN.script[RN.i++][1];for(const k in set)setIn(k,set[k])}RN.t=RN.dur;syncUI()});
+const bReset=mk('Reset',resetAll);
+const bCtl=mk('Controls',()=>$('ctrl').classList.toggle('open'),'nw');
+const bRd=mk('Readings',()=>$('readings').classList.toggle('open'),'nw');
+[bPrev,bPlay,bNext,bSkip,bReset,bCtl,bRd].forEach(b=>ctl.appendChild(b));
+function updPlay(){bPlay.textContent=playing?'Pause':'Play';bPlay.classList.toggle('on',playing)}
+const scB={};
+Object.keys(SCN).forEach(k=>{scB[k]=mk(SCN[k].n,()=>loadScenario(k));$('sc').appendChild(scB[k])});
+function markSc(){for(const k in scB)scB[k].classList.toggle('on',mode==='scn'&&curScn===k)}
+const tl=$('tl');
+STG.forEach((g,i)=>{const d=document.createElement('div');d.className='tlc';d.innerHTML='<button>'+(i+1)+'</button>'+g.k;d.onclick=()=>goStage(i);tl.appendChild(d)});
+function updTL(){markSc();[...tl.children].forEach((d,i)=>{d.classList.toggle('cur',mode==='stage'&&i===stageI);d.classList.toggle('done',mode==='stage'&&i<stageI)})}
+const lb=$('lblbar'),lbBtns={};
+[['all','All labels'],['active','Active labels'],['none','No labels']].forEach(([k,t])=>{const b=mk(t,()=>{lblMode=k;updLb()});lbBtns[k]=b;lb.appendChild(b)});
+const bFollow=mk('Follow stage',()=>{follow=!follow;updLb();if(follow&&mode==='stage')goView(STG[stageI].view)});lb.appendChild(bFollow);
+const mBtns={};[.5,1,2].forEach(m=>{const b=mk(m+'x',()=>{mult=m;updLb()});mBtns[m]=b;lb.appendChild(b)});
+const bSound=mk('Sound',()=>{sound=!sound;updLb()});lb.appendChild(bSound);
+function updLb(){for(const k in lbBtns)lbBtns[k].classList.toggle('on',lblMode===k);bFollow.classList.toggle('on',follow);for(const m in mBtns)mBtns[m].classList.toggle('on',+m===mult);bSound.classList.toggle('on',sound)}
+function pickComp(id){document.querySelectorAll('.lb').forEach(l=>l.classList.remove('on'));if(C[id].l)C[id].l.classList.add('on');$('sensor').innerHTML='<b>'+C[id].label+':</b> '+DESC[id]}
+
+/* ---------- camera ---------- */
+const VW={full:[[0,1.6,3.4],27,.9,1.0],driver:[[.8,2.5,.4],7,3.7,1.15],passenger:[[-.8,2.3,2.7],7.5,2.6,1.15],road:[[0,.8,-8],15,.35,1.2],engine:[[0,1.3,-2.3],8,.7,1.1],dash:[[0,1.8,-.8],9,.5,1.15],tower:[[7,3,-1],26,.95,1.2]};
+const goal=new V3(0,1.6,3.4),cur=new V3(0,1.6,3.4);let th=.9,ph=1.0,gd=27,dist=27,tth=th,tph=ph;
+function goView(n){const v=VW[n];auto=n==='full';goal.set(...v[0]);gd=v[1];tth=v[2];tph=v[3];while(tth-th>PI)tth-=2*PI;while(tth-th<-PI)tth+=2*PI}
+const ptrs=new Map();let pd=0,mvd=0;const el=ren.domElement;
+el.addEventListener('pointerdown',e=>{touched=true;el.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,e);pd=0;mvd=0});
+el.addEventListener('pointermove',e=>{const o=ptrs.get(e.pointerId);if(!o)return;
+ if(ptrs.size===1){th-=(e.clientX-o.clientX)*.007;ph=Math.min(1.5,Math.max(.15,ph-(e.clientY-o.clientY)*.007));tth=th;tph=ph;mvd+=Math.abs(e.clientX-o.clientX)+Math.abs(e.clientY-o.clientY)}
+ ptrs.set(e.pointerId,e);
+ if(ptrs.size===2){const [a,b]=[...ptrs.values()],d=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);if(pd)gd=Math.min(70,Math.max(4,gd*pd/d));pd=d;mvd=99}});
+['pointerup','pointercancel'].forEach(n=>el.addEventListener(n,e=>{const was=ptrs.size===1&&mvd<6&&n==='pointerup';ptrs.delete(e.pointerId);pd=0;if(was)pickAt(e)}));
+el.addEventListener('wheel',e=>{gd=Math.min(70,Math.max(4,gd*(1+e.deltaY*.001)))},{passive:true});
+const rc=new THREE.Raycaster();
+function pickAt(e){rc.setFromCamera(new THREE.Vector2(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1),cam);const h=rc.intersectObjects(compMeshes,false)[0];if(h&&h.object.userData.id)pickComp(h.object.userData.id)}
+addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();ren.setSize(innerWidth,innerHeight)});
+
+/* ---------- panels ---------- */
+function drawDisp(){
+ const key=res.o+res.msg+res.score+S.gsmFault+S.gpsFault;if(key===dispKey)return;dispKey=key;
+ const x=dctx;x.fillStyle='#04121a';x.fillRect(0,0,320,130);x.fillStyle=HX[res.o];x.fillRect(0,0,320,34);
+ x.fillStyle='#04121a';x.font='bold 22px Verdana';x.fillText(LVN[res.o],10,25);
+ x.fillStyle='#e6f1f5';x.font='bold 17px Verdana';
+ let line='',y=62;res.msg.split(' ').forEach(w=>{const t2=line?line+' '+w:w;if(x.measureText(t2).width>300){x.fillText(line,10,y);y+=22;line=w}else line=t2});x.fillText(line,10,y);
+ x.fillStyle='#8fb0bd';x.font='13px Verdana';x.fillText('Risk '+res.score+'   '+(S.gsmFault?'GSM FAIL':'GSM OK')+'   '+(S.gpsFault?'GPS FAIL':'GPS OK'),10,118);
+ dtex.needsUpdate=true}
+let lastPanel=0;
+function updPanels(now){
+ if(now-lastPanel<150)return;lastPanel=now;
+ const m=res.mod,chip=$('st_chip');chip.textContent=LVN[res.o]+' | Risk '+res.score;chip.style.color=HX[res.o];chip.style.borderColor=HX[res.o];
+ $('rows').innerHTML=['driver','vehicle','road','passenger'].map(k=>'<div class="r"><span>'+NM[k]+'</span><b style="color:'+HX[m[k].l]+'">'+m[k].t+'</b></div>').join('');
+ const f=Math.min(1,ctx.dDur/T.persist);
+ $('prog').innerHTML='<div class="mu" style="margin-top:6px">Driver abnormal timer: '+ctx.dDur.toFixed(1)+' s of '+T.persist+' s needed</div><div class="bar"><i style="width:'+(f*100)+'%"></i></div>';
+ clsEl.textContent=res.cls;clsEl.style.color=HX[res.o];
+ const a=(1+spkVal+(S.road==='rough'?(Math.random()-.5)*.5:(Math.random()-.5)*.04)).toFixed(2);
+ const vib=(S.road==='rough'?.2+Math.random()*.1:.03+spkVal*.4).toFixed(2);
+ const rows=[['Driver eyes',S.drv==='closed'?'closed':S.drv==='yawn'?'squinting':'open'],['Mouth / head',S.drv==='yawn'?'yawning':S.drv==='away'?'turned away':'normal'],['Eyes closed',(S.drv==='closed'?ctx.dDur:0).toFixed(1)+' s'],['Acceleration',a+' g'],['Vibration',vib+' g rms'],['Engine temp',S.temp+' C'],['Battery',S.batt.toFixed(1)+' V'],['Tyre FL',S.tyre+' psi'],['Speed',S.speed+' km/h'],['SpO2 / HR',S.spo2+'% / '+S.hr],['Panic button',S.panic?'PRESSED':'released'],['GPS',S.gpsFault?'no fix':'fix OK'],['GSM',S.gsmFault?'no network':'connected'],['Bus / driver',busId()+' / '+FL[busIdx][2]],['Passengers',S.crowd+(S.crowd>=48?' (crowded)':S.crowd>=44?' (busy)':' (moderate)')],['Brake air / door',(S.brake?'LOW':'ok')+' / '+(S.door?'OPEN':'closed')],['Phone / belt',(S.phone?'in use':'no')+' / '+(S.belt?'worn':'NOT worn')],['Mirror check',mirrorNow?'glance now':'-'],['Medical button',S.med?'PRESSED':'released'],['State',LVN[res.o]]];
+ $('rd').innerHTML=rows.map(r=>'<div class="rr"><span>'+r[0]+'</span><b>'+r[1]+'</b></div>').join('');
+ $('lg').innerHTML=logArr.slice(-4).reverse().map(e=>'<div style="border-top:1px solid #1f4a5c;padding:2px 0"><span style="color:'+HX[e.o]+'">'+e.c+'</span> '+e.txt+'</div>').join('')||'<span class="mu">No events yet.</span>';
+ Object.keys(RULES).forEach(k=>{const e=$('rl_'+k);const on=res.rules.includes(k);e.style.color=on?'#3fd0e6':'#8fb0bd';e.style.fontWeight=on?'bold':'normal'});
+}
+
+
+/* ---------- fleet, review, ambulance ---------- */
+const FL=[['TN 47 N 0001','48C Trichy-Madurai','R. Kumar',[90,88,85]],['TN 47 N 0102','27 Trichy-Karur','S. Murugan',[92,89,91]],['TN 47 N 0214','11A Salem-Erode','A. Selvi',[74,78,72]],['TN 47 N 0330','5 Madurai-Theni','P. Raj',[88,86,90]],['TN 47 N 0415','70 Trichy-Thanjavur','M. Anand',[95,91,93]],['TN 47 N 0527','12 Karur-Salem','K. Devi',[90,85,66]],['TN 47 N 0638','3B Madurai-Dindigul','V. Prakash',[87,89,84]],['TN 47 N 0742','21 Erode-Coimbatore','T. Latha',[93,92,90]],['TN 47 N 0850','9 Thanjavur-Kumbakonam','N. Bala',[86,88,91]]];
+const fs=FL.map(()=>0),fa=FL.map(()=>''),fx=FL.map(()=>0),ALT=['Tyre pressure low','Engine temperature high','Driver drowsiness','Passenger medical emergency'],CN=['Green','Yellow','Orange','Red'];
+let flNext=0;
+const pf=$('pane_f'),ambEl=$('amb'),rvEl=$('rev');
+pf.innerHTML='<div class="mu">Depot control room (simulated). Dots move along the route; bus 1 is the live 3D bus.</div><canvas id="fm" width="280" height="110"></canvas><div id="fl_l"></div>';
+const lvlOf=i=>i===0?res.o:fs[i];
+const bandBus=i=>{const h=FL[i][3];return bandOf(Math.round(h.reduce((a,b)=>a+b)/h.length))};
+const SAMPLE=[{t:'08:41',speed:62,label:'Harsh braking',pts:3,val:'-0.6 g'},{t:'09:05',speed:48,label:'Lane change without mirror check',pts:5,val:'no glance in 5 s'},{t:'09:30',speed:71,label:'Phone use while moving',pts:8,val:'phone-use classifier'}];
+const flagged=()=>FL.map((b,i)=>i).filter(i=>reviewFlag(i===0?FL[0][3].concat(scoreTrip(trip).score):FL[i][3]));
+function fleetHtml(){
+ const idx=FL.map((b,i)=>i).sort((a,b)=>lvlOf(b)-lvlOf(a));
+ return idx.map(i=>{const l=lvlOf(i),ty=i===0?res.msg:fa[i];
+  return '<div class="fr" style="'+(l===3?'background:rgba(255,48,48,.15)':'')+'"><span><i class="dot" style="background:'+HX[l]+'"></i><b>'+FL[i][0]+'</b> '+FL[i][1]+'<br><span class="mu">'+FL[i][2]+' | '+bandBus(i)+' | '+CN[l]+(l===3?' | '+ty+' | SMS sent to 112'+(/MEDICAL/i.test(ty)?' | ambulance dispatched (simulated)':''):'')+'</span></span><button data-load="'+i+'">3D</button></div>'}).join('')+'<h4>Review queue</h4>'+(flagged().map(i=>'<div class="fr"><span>'+FL[i][2]+' ('+FL[i][0]+')<br><span class="mu">Review required: a flag, not a verdict</span></span><button data-rev="'+i+'">Review</button></div>').join('')||'<div class="mu">Nobody flagged.</div>')}
+function drawFleet(now){const c=$('fm').getContext('2d');c.fillStyle='#071520';c.fillRect(0,0,280,110);c.strokeStyle='#1f4a5c';c.beginPath();c.ellipse(140,55,120,40,0,0,7);c.stroke();
+ FL.forEach((b,i)=>{const u=((i*.11+now/1000*.004*(1+i%3))%1)*6.283;c.fillStyle=HX[lvlOf(i)];c.beginPath();c.arc(140+120*Math.cos(u),55+40*Math.sin(u),i===0?6:4.5,0,7);c.fill();if(i===0){c.strokeStyle='#fff';c.stroke()}})}
+pf.onclick=e=>{const b=e.target.closest('button');if(!b)return;
+ if(b.dataset.load!==undefined){busIdx=+b.dataset.load;log('Loaded '+FL[busIdx][0]+' into the 3D view');loadScenario(busIdx&&fs[busIdx]>=2?'drowsy':'normal');showTab('pane_c')}
+ if(b.dataset.rev!==undefined)openReview(+b.dataset.rev)};
+function openReview(i){
+ const ev=i===0?scoreTrip(trip).ded:SAMPLE;rvEl.hidden=false;
+ rvEl.innerHTML='<h4 style="margin-top:0">Review: '+FL[i][2]+' ('+FL[i][0]+')</h4><div class="mu">Status: Review required. A flag for a human decision, not a verdict. Recent trips: '+FL[i][3].join(', ')+'</div><h4>Trip timeline</h4>'+(ev.length?ev.map(e=>'<label class="fr"><span>'+e.t+' | '+e.speed+' km/h | '+e.label+' | '+e.val+'</span><span>-'+e.pts+' <input type="checkbox"> dispute</span></label>').join(''):'<div class="mu">No deducted events on this trip yet.</div>')+'<h4>Driver comment</h4><textarea rows="2" placeholder="Driver comment or dispute reason"></textarea><h4>Manager outcome</h4><div class="seg"><button data-o="No action">No action</button><button data-o="Coaching">Coaching</button><button data-o="Further inquiry">Further inquiry</button></div><div id="rv_o" class="mu" style="margin:6px 0"></div><div class="mu">Mirror-check detection from head pose can miss eye-only glances: it needs per-driver calibration and human review before any decision.</div><button id="rv_x" style="margin-top:6px">Close</button>';
+ rvEl.onclick=e=>{const b=e.target.closest('button');if(!b)return;if(b.id==='rv_x'){rvEl.hidden=true;return}if(b.dataset.o){$('rv_o').textContent='Outcome recorded: '+b.dataset.o+'. No automatic penalty is applied.';log('Review outcome for '+FL[i][2]+': '+b.dataset.o)}}}
+ambEl.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center"><b>Passenger medical emergency</b><span class="tag">Simulated</span></div><div id="am_s" class="mu" style="margin:3px 0"></div><canvas id="am_c" width="300" height="150" style="width:100%;max-height:130px"></canvas><div class="mu" style="margin-top:3px;font-size:10px">Seat: rear-left (collapsed passenger). First aid: keep lying down, note symptom time, no food/drink.</div><div class="mu" style="margin-top:4px;color:#8fb0bd">Spoken in call (Tanglish / English):</div><textarea id="am_speech" style="width:100%;height:60px;box-sizing:border-box;background:#081822;color:#ffd166;border:1px solid #1f4a5c;border-radius:4px;padding:5px;font:inherit;font-size:11px;margin:2px 0;resize:vertical;overflow-y:auto"></textarea><div id="am_call_st" style="margin-top:3px;font-weight:600;color:#ffd166;font-size:11px"></div><div style="display:flex;gap:5px;margin-top:5px;flex-wrap:wrap"><button id="am_x" class="red" style="font-size:11px;padding:4px 6px">Cancel false press</button><button id="am_now" class="blue" style="background:#b36b00;border-color:#ffd166;font-size:11px;padding:4px 6px">Confirm emergency & Call</button><button id="am_stop" class="red" style="background:#4a121a;border-color:#ff4d4d;font-size:11px;padding:4px 6px">Stop Calling</button><button id="am_ok" class="blue" style="font-size:11px;padding:4px 6px">Confirm ambulance reached</button></div>';
+const amcx=$('am_c').getContext('2d');
+const amSp=$('am_speech');
+amSp.value=TW.msgTanglish;
+amSp.oninput=()=>{TW.msgTanglish=amSp.value;saveTw();if($('tw_speech'))$('tw_speech').value=amSp.value};
+$('am_x').onclick=()=>{if(S.med&&clock-medStart<=10){S.med=false;log('Medical press cancelled by conductor within 10 s: nothing sent, cancellation logged');twStopCall();syncUI()}};
+$('am_now').onclick=()=>{if(S.med){medStart=clock-10;log('Conductor confirmed emergency immediately: dispatching Call & SMS');smsSent=true;callTriggered=true;doSms('PASSENGER MEDICAL EMERGENCY');const callMsg=TW.msgTanglish||('Avasaram! RVDP bus emergency alert on bus '+busId()+'. Immediate ambulance required.');twCall(callMsg,'emergency_confirmed');syncUI()}};
+$('am_stop').onclick=()=>{twStopCall();log('Conductor stopped emergency call alerts')};
+$('am_ok').onclick=()=>{if(S.med){medDone=true;S.med=false;log('Conductor confirmed ambulance reached');twStopCall();syncUI()}};
+const HOS=[[40,40],[255,45],[225,148]],AM=[[60,140,1],[265,105,0],[105,28,1]];
+function ambDraw(){
+ const x=amcx,W=300,H=170,X0=150,Y0=88;
+ x.fillStyle='#071520';x.fillRect(0,0,W,H);x.strokeStyle='#123747';
+ for(let i=0;i<W;i+=30){x.beginPath();x.moveTo(i,0);x.lineTo(i,H);x.stroke()}
+ for(let i=0;i<H;i+=30){x.beginPath();x.moveTo(0,i);x.lineTo(W,i);x.stroke()}
+ x.font='11px Verdana';
+ HOS.forEach(([hx,hy])=>{x.fillStyle='#4da3ff';x.fillRect(hx-8,hy-8,16,16);x.fillStyle='#fff';x.fillText('H',hx-4,hy+4)});
+ let n=-1,bd=1e9;AM.forEach(([ax,ay,av],i)=>{const d=Math.hypot(ax-X0,ay-Y0);if(av&&d<bd){bd=d;n=i}});
+ const sent=S.med&&res.med.sms,p=sent?Math.min(1,Math.max(0,(clock-medStart-10)/20)):0;
+ AM.forEach(([ax,ay,av],i)=>{let px=ax,py=ay;
+  if(i===n&&sent&&!S.gpsFault){px=ax+(X0-ax)*p;py=ay+(Y0-ay)*p;x.strokeStyle='#ffd166';x.beginPath();x.moveTo(ax,ay);x.lineTo(X0,Y0);x.stroke()}
+  x.fillStyle=av?'#fff':'#777';x.beginPath();x.arc(px,py,6,0,7);x.fill();x.fillStyle='#e02020';x.fillRect(px-1,py-4,2,8);x.fillRect(px-4,py-1,8,2);
+  if(i===n){x.strokeStyle='#ffd166';x.lineWidth=2;x.beginPath();x.arc(px,py,10,0,7);x.stroke();x.lineWidth=1}});
+ x.fillStyle=HX[res.o];x.fillRect(X0-9,Y0-6,18,12);x.fillStyle='#fff';x.fillText('BUS',X0-10,Y0+20);
+ const age=clock-medStart;let st='';
+ if(S.med){if(age<10)st='Alert held '+Math.ceil(10-age)+' s: conductor can cancel a false press';
+  else if(S.gsmFault)st='GSM FAULT: not sent, logged locally. Driver: call 108 manually';
+  else st='Alert sent ('+(S.gpsFault?'NO location':'with GPS')+') to 108/112 + depot. Nearest free ambulance A'+(n+1)+(S.gpsFault?': cannot be routed without GPS':': ETA about '+Math.ceil(6*(1-p))+' min (simulated)')}
+ $('am_s').textContent=st}
+function extraPanels(now){
+ if(now-lastX<250)return;lastX=now;
+ const ts=scoreTrip(trip);
+ $('rule').innerHTML='<b>Active rule:</b> '+(res.rules.length?res.rules.map(k=>k+' - '+RULES[k]).join('<br>'):'none');
+ const ac=[];
+ if(res.o>=1)ac.push('Dashboard: '+res.msg);
+ if(res.o>=2)ac.push('Buzzer + seat vibration on; depot control room alerted');
+ if(res.o===3)ac.push('Hazard lights ON, red status lamp, '+(S.med?res.med.say:{'sent':'one SMS with GPS sent to depot + 112 / ERSS','sent-no-location':'SMS sent without location','logged-local':'GSM failure: logged locally'}[sendPlan(S)]));
+ if(S.med)ac.push('Driver: STOP SAFELY or head to the nearest hospital'+(S.gsmFault?' - call 108 manually':''));
+ $('act').innerHTML=ac.map(a=>'&bull; '+a).join('<br>');
+ const sc=ts.score;
+ $('score').innerHTML='<div class="r" style="margin-top:6px"><span>Driver score (this trip)</span><b style="color:'+HX[sc>=85?0:sc>=70?1:3]+'">'+sc+' - '+ts.band+'</b></div>'+ts.ded.slice(-3).reverse().map(e=>'<div class="mu">-'+e.pts+' '+e.label+' at '+e.t+', '+e.speed+' km/h</div>').join('')+'<div class="mu">+ '+ts.pos+' mirror check(s) before lane changes. 30-trip average (sample): '+AVG+'. Coaching aid only; a human reviews flags, no automatic penalty.</div>';
+ ambEl.hidden=!S.med;
+ if(S.med){
+  const inHold=(clock-medStart<=10);
+  $('am_x').hidden=!inHold;
+  $('am_now').hidden=!inHold;
+  $('am_stop').hidden=inHold;
+  $('am_ok').hidden=inHold;
+ }
+ if(now>flNext){const i=1+Math.floor(Math.random()*8);fs[i]=1+Math.floor(Math.random()*3);fa[i]=ALT[Math.floor(Math.random()*4)];fx[i]=now+20000;flNext=now+30000}
+ fs.forEach((v,i)=>{if(i&&v&&now>fx[i])fs[i]=0});
+ if(!pf.hidden){const h=fleetHtml();if(h!==fh){fh=h;$('fl_l').innerHTML=h}drawFleet(now)}
+}
+
+/* ================= LOOP ================= */
+const sm={eye:1,mouth:.05,pitch:0,yaw:0,hot:0,tyre:0,pz:0,ph:0,pan:0};
+const lerp=(a,b,dt,s)=>a+(b-a)*Math.min(1,dt*s);
+let last=performance.now(),t=0,beepT=0;const tmp=new V3(),tmp2=new V3();
+let callTriggered=false;
+function loop(){
+ requestAnimationFrame(loop);
+ const now=performance.now(),rdt=Math.min(.05,(now-last)/1000);last=now;const dt=rdt*mult;t+=rdt;clock+=dt;
+ if(playing)stepRunner(dt);
+ /* timers and decision */
+ ctx.dDur=(S.drv!=='alert'&&!S.camFault)?ctx.dDur+dt:0;
+ ctx.pDur=(paxCount(S,T)>0&&!S.panic)?ctx.pDur+dt:0;
+ spkT=Math.max(0,spkT-dt);ctx.spike=spkT>0;spkVal=Math.max(0,spkVal-dt*.9);
+ tripStep(dt);ctx.harsh=hbT>0;res=evaluate(S,ctx,T);tripAfter();
+ if(res.o!==lastO){log(LVN[res.o]+(res.o?' - '+res.cls.split(': ')[1]:' - back to normal'));lastO=res.o}
+ if(res.o===3&&!smsSent&&!(S.med&&clock-medStart<10)){
+  smsSent=true;
+  doSms(res.msg);
+  if(TW.callOnConfirm&&!S.gsmFault&&!callTriggered){
+   callTriggered=true;
+   const callMsg=S.med
+    ?(TW.msgTanglish||('Avasaram! RVDP bus emergency alert on bus '+busId()+'. Immediate ambulance required.'))
+    :('Critical alert on bus '+busId()+': '+res.msg+'. Immediate attention required.');
+   twCall(callMsg,S.med?'emergency_confirmed':'critical_alert');
+  }
+ }else if(res.o<3){
+  smsSent=false;
+  callTriggered=false;
+ }
+ /* world motion */
+ const v=S.speed*.12;
+ scr.forEach(o=>{o.position.z+=v*dt;if(o.position.z>40)o.position.z-=L});
+ wheels.forEach(w=>w.rotation.x-=v*dt/.6);
+ if(S.road==='pothole'){potTimer-=dt;if(potTimer<=0){potTimer=3.2;const p=pots.find(q=>!q.on);if(p){p.on=true;p.f=p.r=false;p.m.position.z=.6-Math.min(40,Math.max(v,2)*2.2);p.m.visible=true}}}
+ pots.forEach(p=>{if(!p.on)return;const z=p.m.position.z+=v*dt;if(!p.f&&z>.6){p.f=true;bump=1;spkVal=1.2;spkT=3}if(!p.r&&z>7.2){p.r=true;bump=.7}if(z>14){p.on=false;p.m.visible=false}});
+ bump=Math.max(0,bump-rdt*2.5);
+ car.position.y=(bump*.16+(S.road==='rough'?.04:0))*Math.sin(t*42);car.rotation.x=bump*.025*Math.sin(t*30);
+ /* driver animation */
+ let eT=1,mT=.05,pT=0,yT=0;
+ if(S.drv==='alert'){eT=(t%3.4)<.14?.1:1;yT=mirYaw}
+ else if(S.drv==='yawn'){eT=.35;mT=.55+.45*Math.sin(t*1.6);pT=-.1}
+ else if(S.drv==='closed'){eT=.06;pT=-.15-Math.min(.7,ctx.dDur*.12)}
+ else if(S.drv==='away'){yT=1.1}
+ sm.eye=lerp(sm.eye,eT,rdt,12);sm.mouth=lerp(sm.mouth,mT,rdt,6);sm.pitch=lerp(sm.pitch,pT,rdt,3);sm.yaw=lerp(sm.yaw,yT,rdt,4);
+ eyeL.scale.y=eyeR.scale.y=Math.max(.1,sm.eye);mouth.scale.y=.4+sm.mouth*6;mouth.scale.x=1+sm.mouth*.6;neck.rotation.x=sm.pitch;neck.rotation.y=sm.yaw;
+ coneD.material.color.setHex(S.camFault?0x777777:(res.mod.driver.l>=2?0xff4040:0x4dff9a));
+ /* vehicle animation */
+ sm.hot=lerp(sm.hot,S.temp>T.tempLim?1:0,rdt,.8);engMat.emissiveIntensity=sm.hot*.9;
+ sm.tyre=lerp(sm.tyre,S.tyre<T.tyreLow?1:0,rdt,1.5);wheels[0].scale.set(1,1-.14*sm.tyre,1-.14*sm.tyre);
+ /* passenger animation */
+ const col=S.pax==='collapsed',low=S.spo2<T.spo2Lim;
+ sm.pz=lerp(sm.pz,col?-.85:0,rdt,2);sm.ph=lerp(sm.ph,col?-.7:(low?-.25:0),rdt,2);sm.pan=lerp(sm.pan,S.panic?1:0,rdt,3);
+ pass.rotation.z=sm.pz+.3*sm.pan;headP.rotation.x=sm.ph;headP.rotation.z=col?-.35:0;
+ /* alert outputs */
+ const o=res.o;
+ ledM.forEach((m,i)=>m.emissiveIntensity=i===o?1.5:.1);
+ hazM.emissiveIntensity=(o===3&&Math.sin(t*10)>0)?1.6:0;
+ seatD.position.x=(o>=2)?Math.sin(t*70)*.02:0;
+ beepT-=rdt;if(o>=2&&beepT<=0){beep(o===3?1040:880);beepT=o===3?.35:.8}
+ drawDisp();
+ /* component colours */
+ const bad=new Set();
+ if(spkT>0||S.road==='rough')bad.add('imu');
+ if(S.temp>T.tempLim)bad.add('temp');
+ if(S.batt<11.8)bad.add('batt');
+ if(S.tyre<T.tyreLow)bad.add('tp0');
+ if(S.camFault)bad.add('camD');
+ if(S.gpsFault)bad.add('gps');
+ if(S.gsmFault)bad.add('gsm');
+ if(S.panic)bad.add('panic');if(S.med){bad.add('med');bad.add('medC')}if(S.door)bad.add('door');
+ if(low||col||S.hr<50||S.hr>130)bad.add('spo2');
+ if(res.mod.driver.l>0)bad.add('driver');
+ if(res.mod.passenger.l>0)bad.add('passenger');
+ if(o>=2){bad.add('buzzer');if(o>=2)bad.add('vib')}
+ if(phoneT>0)phoneT-=rdt;
+ for(const id in C){const c=C[id];if(id==='disp'||id==='lamp')continue;
+  let hex=c.color;
+  if(bad.has(id))hex=Math.sin(t*9)>0?0xff9800:0xff3030;
+  if(id==='phone'&&phoneT>0)hex=0x2fbf8f;
+  c.mat.color.setHex(hex);c.mat.emissive.setHex(hex)}
+ panicC.o.scale.set(1,1-.45*sm.pan,1);
+ /* SMS packet */
+ if(pk){pk.t+=rdt/3.2;const u=Math.min(1,pk.t);C.gsm.o.getWorldPosition(tmp);C.tower.o.getWorldPosition(tmp2);
+  const A=tmp.clone(),B=tmp2.clone(),Cc=new V3();C.phone.o.getWorldPosition(Cc);
+  if(u<.5)pk.m.position.lerpVectors(A,B,u/.5);else pk.m.position.lerpVectors(B,Cc,(u-.5)/.5);
+  pk.m.position.y+=Math.sin(u*PI)*3;
+  C.tower.o.scale.setScalar(1+.5*Math.abs(Math.sin(t*10)));
+  if(u>=1){scene.remove(pk.m);pk=null;phoneT=3;$('sms').textContent=pendingText;C.tower.o.scale.setScalar(1)}}
+ /* wires */
+ const emph=mode==='stage'&&(stageI===7||stageI===8||stageI===9);
+ wires.forEach(w=>{w.a.o.getWorldPosition(tmp);w.b.o.getWorldPosition(tmp2);
+  const pa=w.ln.geometry.attributes.position;pa.setXYZ(0,tmp.x,tmp.y,tmp.z);pa.setXYZ(1,tmp2.x,tmp2.y,tmp2.z);pa.needsUpdate=true;
+  w.ln.material.opacity=emph?.85:.22;w.t=(w.t+rdt*.5)%1;w.p.position.lerpVectors(tmp,tmp2,w.t);w.p.visible=lblMode!=='none'})
+ cones.forEach(c=>c.visible=lblMode!=='none');
+ /* camera */
+ if(auto&&!touched)tth+=rdt*.12;th+=(tth-th)*.08;ph+=(tph-ph)*.08;cur.lerp(goal,.08);dist+=(gd-dist)*.08;
+ cam.position.set(cur.x+dist*Math.sin(ph)*Math.sin(th),cur.y+dist*Math.cos(ph),cur.z+dist*Math.sin(ph)*Math.cos(th));cam.lookAt(cur);
+ /* labels */
+ const act=mode==='stage'?STG[stageI].act:[];
+ for(const id in C){const c=C[id];if(!c.l)continue;
+  const isAct=act.includes(id),isBad=bad.has(id);
+  c.o.getWorldPosition(tmp);tmp.y+=.35;tmp.project(cam);
+  const show=lblMode==='all'||(lblMode==='active'&&(isAct||isBad));
+  c.l.style.display=(show&&tmp.z<1)?'block':'none';
+  c.l.style.left=(tmp.x*.5+.5)*innerWidth+'px';c.l.style.top=(-tmp.y*.5+.5)*innerHeight+'px';
+  c.l.classList.toggle('act',isAct);c.l.classList.toggle('bad',isBad&&!isAct)}
+ updPanels(now);extraPanels(now);if(!ambEl.hidden)ambDraw();
+ ren.render(scene,cam);
+}
+const rdt=$('rd_toggle');if(rdt)rdt.onclick=()=>{const w=$('rd_wrap'),a=$('rd_arr');if(!w)return;const h=w.style.display==='none';w.style.display=h?'block':'none';if(a)a.textContent=h?'▼ Hide':'▲ Show'};
+updLb();updPlay();goStage(0);log('Simulator ready, all systems normal');
+loop();
+
+</script></body></html>
